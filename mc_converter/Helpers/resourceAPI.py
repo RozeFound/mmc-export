@@ -11,7 +11,6 @@ class Resource:
     resourceProvider: str # Can be modrinth or curseforge
 
     resourceName: str
-    resourceSlug: str # easy formatted name
 
     @dataclass
     class resourceSide: 
@@ -88,7 +87,6 @@ class ResourceAPI(object):
             json = await response.json()
 
             name = json['title']
-            slug = json['slug'] if 'slug' in json else ""
 
             client = json['client_side']
             server = json['server_side']
@@ -100,7 +98,6 @@ class ResourceAPI(object):
             resource = Resource(
                 resourceProvider = "Modrinth",
                 resourceName = name,
-                resourceSlug = slug,
                 resourceID = ID,
                 fileID = fileID
             )
@@ -127,12 +124,10 @@ class ResourceAPI(object):
             json = await response.json()
 
             name = json['name']
-            slug = json['slug'] if 'slug' in json else ""
 
             resource = Resource(
                 resourceProvider = "CurseForge",
                 resourceName = name,
-                resourceSlug = slug,
                 resourceID = ID,
                 fileID = fileID
             )
