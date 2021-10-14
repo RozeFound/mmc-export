@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.10"
 murmurhash2 = "^0.2.9"
 aiohttp = "^3.7.4"
+tomli = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.0"
