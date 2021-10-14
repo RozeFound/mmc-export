@@ -11,6 +11,7 @@ class Resource:
     resourceProvider: str # Can be modrinth or curseforge
 
     resourceName: str
+    resourceSlug: str
 
     @dataclass
     class resourceSide: 
@@ -37,6 +38,10 @@ class ResourceAPI(object):
 
         self.session = session
 
+        self.session.headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0"
+        self.session.headers["Accept"] = "application/json"
+        self.session.headers["Content-Type"] = "application/json"
+
         super().__init__()
     
     async def get(self, path: Path) -> Resource | None:
@@ -53,14 +58,12 @@ class ResourceAPI(object):
         
         for url in modrinth_links:
             async with self.session.get(url) as response:
-                response.raise_for_status()
                 if response.status == 200:
                     json = await response.json()
                     return await self._get_modrinth(json)
 
         murmur2_hash = get_hash(path, "murmur2")
         async with self.session.post("https://addons-ecs.forgesvc.net/api/v2/fingerprint", data = f"[{murmur2_hash}]") as response:
-            response.raise_for_status()
             json = await response.json()
             if json['exactMatches']:
                 return await self._get_curseforge(json['exactMatches'][0], murmur2_hash)
@@ -87,6 +90,7 @@ class ResourceAPI(object):
             json = await response.json()
 
             name = json['title']
+            slug = json['slug'] if 'slug' in json else name
 
             client = json['client_side']
             server = json['server_side']
@@ -98,13 +102,14 @@ class ResourceAPI(object):
             resource = Resource(
                 resourceProvider = "Modrinth",
                 resourceName = name,
+                resourceSlug=slug,
                 resourceID = ID,
                 fileID = fileID
             )
 
-            resource.resourceSide(client, server, summary)
-            file = resource.file(filename, url)
-            file.hash(hash_type, hash)
+            resource.resourceSide = Resource.resourceSide(client, server, summary)
+            resource.file = Resource.file(filename, url)
+            resource.file.hash = Resource.file.hash(hash_type, hash)
             
             return resource
 
@@ -117,24 +122,26 @@ class ResourceAPI(object):
         url = json['file']['downloadUrl']
 
         hash_type = "murmur2"
-        hash = str(hash)
+        hash = hash
 
         async with self.session.get(f"https://addons-ecs.forgesvc.net/api/v2/addon/{ID}") as response:
 
             json = await response.json()
 
             name = json['name']
+            slug = json['slug'] if 'slug' in json else name
 
             resource = Resource(
                 resourceProvider = "CurseForge",
                 resourceName = name,
+                resourceSlug=slug,
                 resourceID = ID,
                 fileID = fileID
             )
 
-            resource.resourceSide("optional", "optional", "both")
-            file = resource.file(filename, url)
-            file.hash(hash_type, hash)
+            resource.resourceSide = Resource.resourceSide("optional", "optional", "both")
+            resource.file = Resource.file(filename, url)
+            resource.file.hash = Resource.file.hash(hash_type, hash)
 
             return resource
             
