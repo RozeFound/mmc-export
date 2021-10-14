@@ -1,6 +1,6 @@
 author = "RozeFound"
-version = "0.0.3"
-description = "Cool pack, insn't it?"
+version = "0.0.4"
+description = "Cool pack, isn't it?"
 
 [[Resource]]
 name = "BCLib"
