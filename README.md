@@ -19,7 +19,7 @@ Go to Release page, download latest `.whl` file \
 # How to Build
 
 I use poetry to dependency resolving, so first you need to install it \
-Poetry have a [variuos ways to install itself](https://python-poetry.org/docs/#installation), the easiest one is to install it from `pip`
+Poetry have a [variuos ways to install itself](https://python-poetry.org/docs/#installation), the easiest one is to install it from `pip` \
 But I recommend to it install with [pipx](https://github.com/pypa/pipx) to avoid possible conflicts
 
 First install the pipx:
