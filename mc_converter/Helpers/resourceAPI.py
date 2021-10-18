@@ -119,7 +119,7 @@ class ResourceAPI(object):
             json = await response.json()
 
             name = json['title']
-            #author = json['author']
+            teamID = json['team']
             slug = json['slug'] if 'slug' in json else name
 
             client = json['client_side']
@@ -129,15 +129,30 @@ class ResourceAPI(object):
             if client == "required": summary = "client"
             elif server == "required": summary = "server"
 
-            resource = Resource (
-                name = name,
-                filename=filename,
-                side=Side(client, server, summary).to_dict(),
-                hashes=hashes,
-                downloads={"Modrinth": Provider(ID, fileID, url, slug, "Unknown").to_dict()}
-            )
-            
-            return resource
+            async with self.session.get(f"https://api.modrinth.com/api/v1/team/{teamID}/members") as response:
+
+                json = await response.json()
+
+                for user in json:
+                    if user['role'] == "Owner":
+                        userID = user['user_id']
+                        break
+
+                async with self.session.get(f"https://api.modrinth.com/api/v1/user/{userID}") as response:
+
+                    json = await response.json()
+
+                    author = json['username']
+
+                    resource = Resource (
+                        name = name,
+                        filename=filename,
+                        side=Side(client, server, summary).to_dict(),
+                        hashes=hashes,
+                        downloads={"Modrinth": Provider(ID, fileID, url, slug, author).to_dict()}
+                    )
+                    
+                    return resource
 
     async def _get_curseforge(self, json: dict[str], hash: str | int) -> Resource:
   
