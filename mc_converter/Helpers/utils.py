@@ -1,7 +1,6 @@
 from ctypes import ArgumentError
 from os import walk
 from pathlib import Path
-from typing import Any
 
 def get_hash(path: Path, type: str = "sha256") -> str | int:
         
@@ -50,7 +49,7 @@ def get_pack_format(path: Path) -> str:
 
     return "Unknown"
 
-def get_default_config() -> dict[str, Any]:
+def get_default_config() -> dict[str]:
 
     config = {
                 "author": str(),
@@ -70,12 +69,13 @@ def get_default_config() -> dict[str, Any]:
 
     return config
 
+from .abstractions import ModpackManager
 from mc_converter.multimc import MultiMCManager
 from mc_converter.curseforge import CurseForgeManager
 from mc_converter.modrinth import ModrinthManager
 from mc_converter.packwiz import packwizManager
 
-def get_pack_manager(pack_format: str):
+def get_pack_manager(pack_format: str) -> ModpackManager:
 
     match pack_format:
 
