@@ -1,11 +1,9 @@
-import re
-from typing import Any
 from pathlib import Path
 from dataclasses import dataclass
 from aiohttp import ClientSession
 
 @dataclass
-class provider:
+class Provider:
     
     ID: str | int
     fileID: str | int
@@ -27,7 +25,7 @@ class provider:
         return data
 
 @dataclass
-class side:
+class Side:
     
     client: str
     server: str
@@ -106,7 +104,7 @@ class ResourceAPI(object):
         return resource
 
 
-    async def _get_modrinth(self, json: dict[str, Any]) -> Resource:
+    async def _get_modrinth(self, json: dict[str]) -> Resource:
 
         ID = json['mod_id']
         fileID = json['id']
@@ -134,14 +132,14 @@ class ResourceAPI(object):
             resource = Resource (
                 name = name,
                 filename=filename,
-                side=side(client, server, summary).to_dict(),
+                side=Side(client, server, summary).to_dict(),
                 hashes=hashes,
-                downloads={"Modrinth": provider(ID, fileID, url, slug, "Unknown").to_dict()}
+                downloads={"Modrinth": Provider(ID, fileID, url, slug, "Unknown").to_dict()}
             )
             
             return resource
 
-    async def _get_curseforge(self, json: dict[str, Any], hash: str | int) -> Resource:
+    async def _get_curseforge(self, json: dict[str], hash: str | int) -> Resource:
   
         ID = json['id']
         fileID = json['file']['id']
@@ -160,10 +158,9 @@ class ResourceAPI(object):
             resource = Resource (
                 name = name,
                 filename=filename,
-                side=side("optional", "optional", "both").to_dict(),
+                side=Side("optional", "optional", "both").to_dict(),
                 hashes={"murmur2": hash},
-                downloads={"CurseForge": provider(ID, fileID, url, slug, author).to_dict()}
+                downloads={"CurseForge": Provider(ID, fileID, url, slug, author).to_dict()}
             )
 
             return resource
-            
