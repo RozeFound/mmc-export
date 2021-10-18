@@ -1,36 +1,59 @@
+import re
 from typing import Any
 from pathlib import Path
 from dataclasses import dataclass
 from aiohttp import ClientSession
 
 @dataclass
+class provider:
+    
+    ID: str | int
+    fileID: str | int
+    url: str
+
+    slug: str
+    author: str
+
+    def to_dict(self):
+        
+        data = {
+            "ID": self.ID,
+            "fileID": self.fileID,
+            "url": self.url,
+            "slug": self.slug,
+            "author": self.author
+        }
+
+        return data
+
+@dataclass
+class side:
+    
+    client: str
+    server: str
+    summary: str
+
+    def to_dict(self):
+        
+        data = {
+            "client": self.client,
+            "server": self.server,
+            "summary": self.summary,
+        }
+
+        return data
+
+@dataclass
 class Resource:
 
     "Represents downloadable item i.e. mod, resourcepack, shaderpack etc."
 
-    resourceProvider: str # Can be modrinth or curseforge
+    name: str
+    filename: str
 
-    resourceName: str
-    resourceSlug: str
-
-    @dataclass
-    class resourceSide: 
-        client: str
-        server: str
-        summary: str
-
-    resourceID: str
-    fileID: str
-
-    @dataclass
-    class file:
-        filename: str 
-        url: str
-
-        @dataclass
-        class hash:
-            type: str
-            value: str | int
+    side: dict[str, dict[str]]
+    hashes: dict[str, str | int]
+    downloads: dict[str, dict[str]]
 
 class ResourceAPI(object):
 
@@ -48,6 +71,7 @@ class ResourceAPI(object):
 
         from .utils import get_hash
 
+        murmur2_hash = get_hash(path, "murmur2")
         sha512_hash = get_hash(path, "sha512")
         sha1_hash = get_hash(path, "sha1")
 
@@ -56,19 +80,31 @@ class ResourceAPI(object):
             f"https://api.modrinth.com/api/v1/version_file/{sha1_hash}?algorithm=sha1"
         ]
         
+        modrinth = None
         for url in modrinth_links:
             async with self.session.get(url) as response:
                 if response.status == 200:
                     json = await response.json()
-                    return await self._get_modrinth(json)
+                    modrinth = await self._get_modrinth(json)
+                    break
 
-        murmur2_hash = get_hash(path, "murmur2")
+        curseforge = None
         async with self.session.post("https://addons-ecs.forgesvc.net/api/v2/fingerprint", data = f"[{murmur2_hash}]") as response:
             json = await response.json()
             if json['exactMatches']:
-                return await self._get_curseforge(json['exactMatches'][0], murmur2_hash)
+                curseforge = await self._get_curseforge(json['exactMatches'][0], murmur2_hash)
 
-        return
+        if modrinth: 
+            resource = modrinth
+            if curseforge: 
+                resource.downloads.update(curseforge.downloads)
+                resource.hashes.update(curseforge.hashes)
+
+        elif curseforge: resource = curseforge
+        else: return
+
+        return resource
+
 
     async def _get_modrinth(self, json: dict[str, Any]) -> Resource:
 
@@ -78,18 +114,14 @@ class ResourceAPI(object):
         filename = json['files'][0]['filename']
         url = json['files'][0]['url']
 
-        hash_type = "sha1"
-
-        if("sha512" in json['files'][0]['hashes']):
-            hash_type = "sha512"
-
-        hash = json['files'][0]['hashes'][hash_type]
+        hashes = json['files'][0]['hashes']
 
         async with self.session.get(f"https://api.modrinth.com/api/v1/mod/{ID}") as response:
 
             json = await response.json()
 
             name = json['title']
+            #author = json['author']
             slug = json['slug'] if 'slug' in json else name
 
             client = json['client_side']
@@ -99,17 +131,13 @@ class ResourceAPI(object):
             if client == "required": summary = "client"
             elif server == "required": summary = "server"
 
-            resource = Resource(
-                resourceProvider = "Modrinth",
-                resourceName = name,
-                resourceSlug=slug,
-                resourceID = ID,
-                fileID = fileID
+            resource = Resource (
+                name = name,
+                filename=filename,
+                side=side(client, server, summary).to_dict(),
+                hashes=hashes,
+                downloads={"Modrinth": provider(ID, fileID, url, slug, "Unknown").to_dict()}
             )
-
-            resource.resourceSide = Resource.resourceSide(client, server, summary)
-            resource.file = Resource.file(filename, url)
-            resource.file.hash = Resource.file.hash(hash_type, hash)
             
             return resource
 
@@ -121,27 +149,21 @@ class ResourceAPI(object):
         filename = json['file']['fileName']
         url = json['file']['downloadUrl']
 
-        hash_type = "murmur2"
-        hash = hash
-
         async with self.session.get(f"https://addons-ecs.forgesvc.net/api/v2/addon/{ID}") as response:
 
             json = await response.json()
 
             name = json['name']
+            author = json['authors'][0]['name']
             slug = json['slug'] if 'slug' in json else name
 
-            resource = Resource(
-                resourceProvider = "CurseForge",
-                resourceName = name,
-                resourceSlug=slug,
-                resourceID = ID,
-                fileID = fileID
+            resource = Resource (
+                name = name,
+                filename=filename,
+                side=side("optional", "optional", "both").to_dict(),
+                hashes={"murmur2": hash},
+                downloads={"CurseForge": provider(ID, fileID, url, slug, author).to_dict()}
             )
-
-            resource.resourceSide = Resource.resourceSide("optional", "optional", "both")
-            resource.file = Resource.file(filename, url)
-            resource.file.hash = Resource.file.hash(hash_type, hash)
 
             return resource
             
