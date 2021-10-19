@@ -86,4 +86,3 @@ class CurseForgeManager(ModpackManager):
 
         for override in self.config['overrides']:
             self.add_override(override)
-        

@@ -63,6 +63,9 @@ class ResourceAPI(object):
         self.session.headers["Accept"] = "application/json"
         self.session.headers["Content-Type"] = "application/json"
 
+        self.modrinth = "https://api.modrinth.com/api/v1"
+        self.curseforge = "https://addons-ecs.forgesvc.net/api/v2"
+
         super().__init__()
     
     async def get(self, path: Path) -> Resource | None:
@@ -74,8 +77,8 @@ class ResourceAPI(object):
         sha1_hash = get_hash(path, "sha1")
 
         modrinth_links = [
-            f"https://api.modrinth.com/api/v1/version_file/{sha512_hash}?algorithm=sha512",
-            f"https://api.modrinth.com/api/v1/version_file/{sha1_hash}?algorithm=sha1"
+            f"{self.modrinth}/version_file/{sha512_hash}?algorithm=sha512",
+            f"{self.modrinth}/version_file/{sha1_hash}?algorithm=sha1"
         ]
         
         modrinth = None
@@ -87,7 +90,7 @@ class ResourceAPI(object):
                     break
 
         curseforge = None
-        async with self.session.post("https://addons-ecs.forgesvc.net/api/v2/fingerprint", data = f"[{murmur2_hash}]") as response:
+        async with self.session.post(f"{self.curseforge}/fingerprint", data = f"[{murmur2_hash}]") as response:
             json = await response.json()
             if json['exactMatches']:
                 curseforge = await self._get_curseforge(json['exactMatches'][0], murmur2_hash)
@@ -114,7 +117,7 @@ class ResourceAPI(object):
 
         hashes = json['files'][0]['hashes']
 
-        async with self.session.get(f"https://api.modrinth.com/api/v1/mod/{ID}") as response:
+        async with self.session.get(f"{self.modrinth}/mod/{ID}") as response:
 
             json = await response.json()
 
@@ -129,7 +132,7 @@ class ResourceAPI(object):
             if client == "required": summary = "client"
             elif server == "required": summary = "server"
 
-            async with self.session.get(f"https://api.modrinth.com/api/v1/team/{teamID}/members") as response:
+            async with self.session.get(f"{self.modrinth}/team/{teamID}/members") as response:
 
                 json = await response.json()
 
@@ -138,7 +141,7 @@ class ResourceAPI(object):
                         userID = user['user_id']
                         break
 
-                async with self.session.get(f"https://api.modrinth.com/api/v1/user/{userID}") as response:
+                async with self.session.get(f"{self.modrinth}/user/{userID}") as response:
 
                     json = await response.json()
 
@@ -162,7 +165,7 @@ class ResourceAPI(object):
         filename = json['file']['fileName']
         url = json['file']['downloadUrl']
 
-        async with self.session.get(f"https://addons-ecs.forgesvc.net/api/v2/addon/{ID}") as response:
+        async with self.session.get(f"{self.curseforge}/addon/{ID}") as response:
 
             json = await response.json()
 
