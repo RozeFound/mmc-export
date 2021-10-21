@@ -106,6 +106,39 @@ class ResourceAPI(object):
 
         return resource
 
+    async def get_author(self, resource_id: str | int, provider: str) -> str:
+
+        if provider == "Modrinth":
+
+            async with self.session.get(f"{self.modrinth}/mod/{resource_id}") as response:
+
+                json = await response.json()
+                teamID = json['team']
+
+                async with self.session.get(f"{self.modrinth}/team/{teamID}/members") as response:
+
+                    json = await response.json()
+
+                    for user in json:
+                        if user['role'] == "Owner":
+                            userID = user['user_id']
+                            break
+
+                    async with self.session.get(f"{self.modrinth}/user/{userID}") as response:
+
+                        json = await response.json()
+
+                        author = json['username']
+
+        elif provider == "CurseForge":
+
+            async with self.session.get(f"{self.curseforge}/addon/{resource_id}") as response:
+
+                json = await response.json()
+
+                author = json['authors'][0]['name']
+
+        return author
 
     async def _get_modrinth(self, json: dict[str]) -> Resource:
 
