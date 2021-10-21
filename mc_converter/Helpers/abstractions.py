@@ -22,8 +22,25 @@ class ModpackManager(ABC):
         self._temp_dir.cleanup()
 
     @abstractmethod
+    def get_resource(self, resource: dict[str]):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_override(self, file: dict[str]):
+        raise NotImplementedError()
+
+    @abstractmethod
     def parse(self) -> None: 
         raise NotImplementedError()
+
+    @abstractmethod
+    def add_resource(self, resource: dict[str]):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def add_override(self, file: dict[str]):
+        raise NotImplementedError()
+
     @abstractmethod
     def write(self) -> None:
         raise NotImplementedError()
