@@ -30,7 +30,7 @@ def get_pack_format(path: Path) -> str:
     # Modrinth has index.json
     # MultiMC has mmc-pack.json and instance.cfg
     # CurseForge has manifest.json and modlist.html
-    # packwiz is a folder, and has index.toml and pack.toml
+    # packwiz can be a folder, and has index.toml and pack.toml
     # So.. That was easier then I thought
 
     if path.is_dir():
@@ -44,6 +44,7 @@ def get_pack_format(path: Path) -> str:
             filenames = [Path(file).name for file in zip.namelist()]
 
             if "index.json" in filenames: return "modrinth"
+            elif "index.toml" in filenames and "pack.toml" in filenames: return "packwiz"
             elif "mmc-pack.json" in filenames and "instance.cfg" in filenames: return "multimc"
             elif "manifest.json" in filenames and "modlist.html" in filenames: return "curseforge"
 
