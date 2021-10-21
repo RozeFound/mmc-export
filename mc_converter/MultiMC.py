@@ -108,8 +108,6 @@ class MultiMCManager(ModpackManager):
         for override in overrides:
             self.get_override(override)
 
-        del self.config['Resource']
-
         modpack_dir = next(self.temp_dir.iterdir())
         if not self.config['name']: self.config['name'] = modpack_dir.name
 
@@ -130,6 +128,12 @@ class MultiMCManager(ModpackManager):
                 if not self.config['modloader']['type']: 
                     self.config['modloader']['type'] = "forge"
                     self.config['modloader']['version'] = component['cachedVersion']
+
+    def add_resource(self, resource: dict[str]):
+        return super().add_resource(resource)
+
+    def add_override(self, file: dict[str]):
+        return super().add_override(file)
 
     def write(self) -> None:
         return super().write()

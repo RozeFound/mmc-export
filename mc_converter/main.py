@@ -18,23 +18,30 @@ async def main():
     parser.add_argument('-o', '--output', dest='output', type=Path, help='Specify output directory (optional)', default=Path.cwd())
     #args = parser.parse_args()
 
+    # test MultiMC to ALL
     args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/Optimized & Beautiful.zip',
-                              '-f', 'intermediate', 'curseforge',
+                              '-f', 'intermediate', 'curseforge', 'packwiz',
+                              '-c', 'example_config.toml',
+                              '-o', 'C:/users/Rozef/Desktop'])
+
+    # test packwiz to ALL
+    args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/FO',
+                              '-f', 'intermediate', 'curseforge', 'packwiz',
                               '-c', 'example_config.toml',
                               '-o', 'C:/users/Rozef/Desktop'])
 
     if not args.input.exists(): exit("Invalid input!")
-    pack_format = get_pack_format(args.input)
-    if pack_format == "Unknown": exit("Invalid pack input format!")
+    input_format = get_pack_format(args.input)
+    if input_format == "Unknown": exit("Invalid pack input format!")
 
     config = get_default_config()
 
     if args.config:
-        with open(args.config) as file:
+        with open(args.config, "rb") as file:
             config.update(parse_toml(file))
 
     async with ClientSession(connector=TCPConnector(limit=0)) as session:
-        input_manager = get_pack_manager(pack_format)(args.input, session, config)
+        input_manager = get_pack_manager(input_format)(args.input, session, config)
         await input_manager.parse()
 
         if not config['author']: config['author'] = input("Author: ")
@@ -42,11 +49,17 @@ async def main():
         if not config['version']: config['version'] = input("Version: ")
         if not config['description']: config['description'] = input("Description: ")
 
+        if "Resource" in config: del config['Resource']
+
         for format in args.formats:
 
             if format == "intermediate":
                 with open(args.output / "intermediate_output.json", "w") as file:
                     write_json(config, file, indent=4)
+                continue
+            
+            if input_format == format:
+                print(f"{format} to {format}? Why? Anyway it's a bad idea. I will prevent it.")
                 continue
 
             output_manager = get_pack_manager(format)(args.output, session, config)
