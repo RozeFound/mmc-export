@@ -2,19 +2,19 @@ from .Helpers.abstractions import ModpackManager
 
 class ModrinthManager(ModpackManager):
 
-    def get_resource(self, resource: dict[str]):
+    def get_resource(self, resource: dict[str]) -> None:
         return super().get_resource(resource)
 
-    def get_override(self, file: dict[str]):
+    def get_override(self, file: dict[str]) -> None:
         return super().get_override(file)
 
     def parse(self) -> None:
         return super().parse()
 
-    def add_resource(self, resource: dict[str]):
+    def add_resource(self, resource: dict[str]) -> None:
         return super().add_resource(resource)
 
-    def add_override(self, file: dict[str]):
+    def add_override(self, file: dict[str]) -> None:
         return super().add_override(file)
 
     def write(self) -> None:

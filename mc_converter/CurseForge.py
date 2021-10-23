@@ -11,10 +11,10 @@ class CurseForgeManager(ModpackManager):
 
         super().__init__(path, session, config)
 
-    def get_resource(self, resource: dict[str]):
+    def get_resource(self, resource: dict[str]) -> None:
         return super().get_resource(resource)
 
-    def get_override(self, file: dict[str]):
+    def get_override(self, file: dict[str]) -> None:
         return super().get_override(file)
 
     def parse(self) -> None:
@@ -42,7 +42,7 @@ class CurseForgeManager(ModpackManager):
             "overrides": "overrides"
         }
 
-    def add_resource(self, resource: dict[str]):
+    def add_resource(self, resource: dict[str]) -> None:
 
         provider_data = resource['downloads']['CurseForge']
 

@@ -21,7 +21,7 @@ class packwizManager(ModpackManager):
 
         super().__init__(path, session, config)
 
-    async def get_resource(self, resource: dict[str]):
+    async def get_resource(self, resource: dict[str]) -> None:
 
         toml_path: Path = self.temp_dir / resource['file']
         with open(toml_path, "rb") as file:
@@ -78,7 +78,7 @@ class packwizManager(ModpackManager):
 
         self.config['resources'].append(data)
 
-    def get_override(self, file: dict[str]):
+    def get_override(self, file: dict[str]) -> None:
 
         relaitve_path = Path(file['file'])
         full_path = self.temp_dir / relaitve_path
@@ -152,7 +152,7 @@ class packwizManager(ModpackManager):
             }
         }
 
-    def add_resource(self, resource: dict[str]):
+    def add_resource(self, resource: dict[str]) -> None:
 
         data = {
             "name": resource['name'],
@@ -189,7 +189,7 @@ class packwizManager(ModpackManager):
                 data['download'] = {
                     "url": provider_data['url'],
                     "hash-format": hash_format,
-                    "hash": resource['hashes'][hash_format]
+                    "hash": str(resource['hashes'][hash_format])
                 }
 
                 break
@@ -208,7 +208,7 @@ class packwizManager(ModpackManager):
         
         self.index['Files'].append(index_data)
 
-    def add_override(self, file: dict[str]):
+    def add_override(self, file: dict[str]) -> None:
 
         file_path = self.temp_dir / file['relative_path']
         file_path.mkdir(parents=True, exist_ok=True)

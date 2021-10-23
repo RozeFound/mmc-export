@@ -25,10 +25,10 @@ async def main():
                               '-o', 'C:/users/Rozef/Desktop'])
 
     # test packwiz to ALL
-    args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/FO',
-                              '-f', 'intermediate', 'curseforge', 'packwiz',
-                              '-c', 'example_config.toml',
-                              '-o', 'C:/users/Rozef/Desktop'])
+    # args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/FO',
+    #                           '-f', 'intermediate', 'curseforge', 'packwiz',
+    #                           '-c', 'example_config.toml',
+    #                           '-o', 'C:/users/Rozef/Desktop'])
 
     if not args.input.exists(): exit("Invalid input!")
     input_format = get_pack_format(args.input)

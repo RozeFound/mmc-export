@@ -129,10 +129,10 @@ class MultiMCManager(ModpackManager):
                     self.config['modloader']['type'] = "forge"
                     self.config['modloader']['version'] = component['cachedVersion']
 
-    def add_resource(self, resource: dict[str]):
+    def add_resource(self, resource: dict[str]) -> None:
         return super().add_resource(resource)
 
-    def add_override(self, file: dict[str]):
+    def add_override(self, file: dict[str]) -> None:
         return super().add_override(file)
 
     def write(self) -> None:
