@@ -1,9 +1,19 @@
 [tool.poetry]
-name = "mc-modpack-converter"
+name = "mc-converter"
 version = "0.1.0"
 description = ""
 authors = ["RozeFound"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/RozeFound/modpack-converter"
+homepage = "https://github.com/RozeFound/modpack-converter"
+
+keywords = [
+    "minecraft",
+    "mods",
+    "modpack",
+    "converter"
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,6 +25,9 @@ pytoml = "^0.1.21"
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.0"
 flake8 = "^4.0.1"
+
+[tool.poetry.scripts]
+mc-converter = "mc_converter:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

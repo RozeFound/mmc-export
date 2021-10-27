@@ -52,3 +52,15 @@ async def main():
 
             output_manager = get_pack_manager(format)(args.output, session, config)
             output_manager.write()
+
+    return 0
+
+
+import sys
+import asyncio
+
+if sys.platform.startswith("win"):
+   asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+            
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
