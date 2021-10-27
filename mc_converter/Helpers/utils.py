@@ -2,7 +2,7 @@ from ctypes import ArgumentError
 from os import walk
 from pathlib import Path
 
-def get_hash(path: Path, type: str = "sha256") -> str | int:
+def get_hash(path: Path, type: str = "sha256") -> str:
         
     from hashlib import sha1, sha256, sha512
     from murmurhash2 import murmurhash2 as murmur2
@@ -22,7 +22,7 @@ def get_hash(path: Path, type: str = "sha256") -> str | int:
 
         case _: raise(ArgumentError("Incorrect hash type!"))
 
-    return hash
+    return str(hash)
 
 def get_pack_format(path: Path) -> str:
 

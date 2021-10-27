@@ -20,7 +20,7 @@ async def main():
 
     # test MultiMC to ALL
     args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/Optimized & Beautiful.zip',
-                              '-f', 'intermediate', 'curseforge', 'packwiz',
+                              '-f', 'intermediate', 'curseforge', 'modrinth', 'packwiz',
                               '-c', 'example_config.toml',
                               '-o', 'C:/users/Rozef/Desktop'])
 

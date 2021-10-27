@@ -12,7 +12,7 @@ class packwizManager(ModpackManager):
 
     def __init__(self, path: Path | str, session: ClientSession, config: dict[str]) -> None:
 
-        self.pack_info = {}
+        self.pack_info = dict()
 
         self.index = {
             "hash-format": "sha256",
@@ -189,7 +189,7 @@ class packwizManager(ModpackManager):
                 data['download'] = {
                     "url": provider_data['url'],
                     "hash-format": hash_format,
-                    "hash": str(resource['hashes'][hash_format])
+                    "hash": resource['hashes'][hash_format]
                 }
 
                 break

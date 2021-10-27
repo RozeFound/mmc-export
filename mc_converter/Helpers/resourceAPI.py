@@ -1,5 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
+import re
 from aiohttp import ClientSession
 
 @dataclass
@@ -105,6 +106,29 @@ class ResourceAPI(object):
         else: return
 
         return resource
+
+    async def get_by_hash(self, hash_type: str, hash: str | int) -> Resource | None:
+
+        match hash_type:
+
+            case "sha1" | "sha256" | "sha512":
+
+                url = f"{self.modrinth}/version_file/{hash}?algorithm={hash_type}"
+                async with self.session.get(url) as response:
+                    if response.status == 200:
+                        json = await response.json()
+                        return await self._get_modrinth(json)
+
+            case "murmur2": 
+
+                url = f"{self.curseforge}/fingerprint"              
+                async with self.session.post(url, data = f"[{hash}]") as response:
+                    json = await response.json()
+                    if json['exactMatches']:
+                        return await self._get_curseforge(json['exactMatches'][0], hash)
+
+        return None
+
 
     async def get_author(self, resource_id: str | int, provider: str) -> str:
 
