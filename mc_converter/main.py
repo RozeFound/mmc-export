@@ -16,19 +16,7 @@ async def main():
     parser.add_argument('-i', '--input', dest='input', type=Path, help='Path to pack', required=True)
     parser.add_argument('-f', '--format', dest='formats', type=str, nargs="+", choices=formats, help='Format to convert to', required=True)
     parser.add_argument('-o', '--output', dest='output', type=Path, help='Specify output directory (optional)', default=Path.cwd())
-    #args = parser.parse_args()
-
-    # test MultiMC to ALL
-    args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/Optimized & Beautiful.zip',
-                              '-f', 'intermediate', 'curseforge', 'modrinth', 'packwiz',
-                              '-c', 'example_config.toml',
-                              '-o', 'C:/users/Rozef/Desktop'])
-
-    # test packwiz to ALL
-    # args = parser.parse_args(['-i', 'C:/users/Rozef/Desktop/dev/FO',
-    #                           '-f', 'intermediate', 'curseforge', 'packwiz',
-    #                           '-c', 'example_config.toml',
-    #                           '-o', 'C:/users/Rozef/Desktop'])
+    args = parser.parse_args()
 
     if not args.input.exists(): exit("Invalid input!")
     input_format = get_pack_format(args.input)
