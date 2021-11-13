@@ -129,12 +129,28 @@ class ResourceAPI(object):
 
         return None
 
+    async def get_by_ID(self, ID: str, fileID: str) -> Resource | None:
 
-    async def get_author(self, resource_id: str | int, provider: str) -> str:
+        url = f"{self.modrinth}/version_file/{fileID}"
+        async with self.session.get(url) as response:
+            if response.status == 200:
+                json = await response.json()
+                return await self._get_modrinth(json)
+
+            else:
+                url = f"{self.curseforge}/addon/{ID}/file/{fileID}"
+                async with self.session.post(url, data = f"[{hash}]") as response:
+                    json = await response.json()
+                    if json['exactMatches']:
+                        return await self._get_curseforge(json['exactMatches'][0], hash)
+
+        return None
+
+    async def get_author(self, ID: str | int, provider: str) -> str:
 
         if provider == "Modrinth":
 
-            async with self.session.get(f"{self.modrinth}/mod/{resource_id}") as response:
+            async with self.session.get(f"{self.modrinth}/mod/{ID}") as response:
 
                 json = await response.json()
                 teamID = json['team']
@@ -156,7 +172,7 @@ class ResourceAPI(object):
 
         elif provider == "CurseForge":
 
-            async with self.session.get(f"{self.curseforge}/addon/{resource_id}") as response:
+            async with self.session.get(f"{self.curseforge}/addon/{ID}") as response:
 
                 json = await response.json()
 

@@ -1,6 +1,13 @@
+import asyncio
+from os import walk
 from pathlib import Path
 from aiohttp import ClientSession
+
+from mc_converter.Helpers.resourceAPI import Resource
+from mc_converter.Helpers.utils import get_hash
 from .Helpers.abstractions import ModpackManager
+
+from json import load as parse_json
 
 class CurseForgeManager(ModpackManager):
 
@@ -11,14 +18,80 @@ class CurseForgeManager(ModpackManager):
 
         super().__init__(path, session, config)
 
-    def get_resource(self, resource: dict[str]) -> None:
-        return super().get_resource(resource)
+    async def get_resource(self, resource: dict[str]) -> None:
+        
+        ID = resource['projectID']
+        fileID = resource['fileID']
 
-    def get_override(self, file: dict[str]) -> None:
-        return super().get_override(file)
+        resource: Resource = await self.resource_manager.get_by_ID(ID, fileID)
+        if resource is None: return
 
-    def parse(self) -> None:
-        return super().parse()
+        data = {       
+            "name": resource.name,
+            "filename": resource.filename,
+
+            "hashes": resource.hashes,
+
+            "relative_path": "mods" if Path(resource.filename).suffix == ".jar" else "resourcepacks", # I don't know how to categorize it anyway
+
+            "side": resource.side,
+            "downloads": resource.downloads
+        }
+
+        self.config['resources'].append(data)
+
+    def get_override(self, path: Path) -> None:
+
+        overrides_dir = self.temp_dir / "overrides"
+        relative_path = path.relative_to(overrides_dir)
+
+        data = {
+            "filename": path.name,
+
+            "hashes": {
+                "sha256": get_hash(path)
+            },
+
+            "full_path": path.as_posix(),
+            "relative_path": relative_path.as_posix(),
+        }
+        
+        self.config['overrides'].append(data)
+
+    async def parse(self) -> None:
+
+        from shutil import unpack_archive
+        unpack_archive(self.modpack_path, self.temp_dir)
+
+        with open(self.temp_dir / "manifest.json") as file:
+            self.manifest = parse_json(file)
+
+        for entry in ("author", "name", "version"):
+            if entry in self.manifest and entry not in self.config:
+                self.config[entry] = self.manifest[entry]
+
+        self.config['minecraft'] = self.manifest['minecraft']['version']
+
+        for loader in self.manifest['minecraft']['modloaders']:
+
+            if "fabric" in loader['id']:
+                self.config['modloader']['type'] = "fabric"
+            if "forge" in loader['id']:
+                self.config['modloader']['type'] = "forge"
+
+            self.config['modloader']['version'] = loader['id'].split("-")[-1]
+
+        futures = []
+
+        for resource in self.manifest['files']:
+            futures.append(self.get_resource(resource))
+
+        await asyncio.gather(*futures)
+
+        overrides = [Path(file) for _, _, filenames in walk(self.temp_dir / "overrides") for file in filenames]
+
+        for override in overrides:
+            self.get_override(override)
 
     def write_manifest(self) -> None:
 

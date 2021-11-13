@@ -26,7 +26,7 @@ class MultiMCManager(ModpackManager):
                 "downloads": resource.downloads
             }
 
-        elif path.name in [item['filename'] for item in self.config['Resource']]:
+        elif "Resource" in self.config and path.name in [item['filename'] for item in self.config['Resource']]:
 
             resource = [item for item in self.config['Resource'] if item['filename'] == path.name][0]
 
@@ -129,11 +129,6 @@ class MultiMCManager(ModpackManager):
                     self.config['modloader']['type'] = "forge"
                     self.config['modloader']['version'] = component['cachedVersion']
 
-    def add_resource(self, resource: dict[str]) -> None:
-        return super().add_resource(resource)
-
-    def add_override(self, file: dict[str]) -> None:
-        return super().add_override(file)
 
     def write(self) -> None:
         return super().write()

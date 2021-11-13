@@ -7,9 +7,9 @@ from tomli import load as parse_toml
 
 from .Helpers.utils import get_pack_format, get_default_config, get_pack_manager
 
-async def main():
+async def program():
 
-    formats = ['packwiz', 'multimc', 'modrinth', 'curseforge', 'intermediate']
+    formats = ['packwiz', 'modrinth', 'curseforge', 'intermediate']
  
     parser = ArgumentParser(description="Converts modpack formats to each other", exit_on_error=True)
     parser.add_argument('-c', '--config', dest='config', type=Path, help='Path to config, used to fill the gaps in parsed data')
@@ -55,12 +55,12 @@ async def main():
 
     return 0
 
+def main():
+    import sys
+    import asyncio
 
-import sys
-import asyncio
-
-if sys.platform.startswith("win"):
-   asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-            
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+    if sys.platform.startswith("win"):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(program())
