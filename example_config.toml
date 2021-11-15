@@ -5,12 +5,12 @@ description = "Cool pack, isn't it?"
 [[Resource]]
 name = "BCLib"
 slug = "bclib"
-filename = "bclib-0.4.0.jar"
+filename = "mods/bclib-0.4.0.jar"
 url = "https://github.com/paulevsGitch/BCLib/releases/download/0.4.0/bclib-0.4.0.jar"
 
 [[Resource]]
 name = "Complementary Shaders"
 slug = "complementary_shaders"
-filename = "ComplementaryShaders_v4.1.zip"
+filename = "shaderpacks/ComplementaryShaders_v4.1.zip"
 url = "https://edge.forgecdn.net/files/3391/516/ComplementaryShaders_v4.1.zip"
 
