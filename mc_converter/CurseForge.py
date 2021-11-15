@@ -67,7 +67,7 @@ class CurseForgeManager(ModpackManager):
             self.manifest = parse_json(file)
 
         for entry in ("author", "name", "version"):
-            if entry in self.manifest and entry not in self.config:
+            if entry in self.manifest and not self.config[entry]:
                 self.config[entry] = self.manifest[entry]
 
         self.config['minecraft'] = self.manifest['minecraft']['version']
