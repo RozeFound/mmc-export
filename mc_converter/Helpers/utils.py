@@ -37,13 +37,21 @@ def get_pack_format(path: Path) -> str:
         files = [file for _, _, filenames in walk(path) for file in filenames]
         if "index.toml" in files and "pack.toml" in files: return "packwiz"
 
+    if str(path).endswith("mrpack"):
+        from zipfile import ZipFile
+        with ZipFile(path) as zip:
+
+            filenames = [Path(file).name for file in zip.namelist()]
+
+            if "modrinth.index.json" in filenames: return "modrinth"
+
     if str(path).endswith("zip"):
         from zipfile import ZipFile
         with ZipFile(path) as zip:
 
             filenames = [Path(file).name for file in zip.namelist()]
 
-            if "index.json" in filenames: return "modrinth"
+            if "modrinth.index.json" in filenames: return "modrinth"
             elif "index.toml" in filenames and "pack.toml" in filenames: return "packwiz"
             elif "mmc-pack.json" in filenames and "instance.cfg" in filenames: return "multimc"
             elif "manifest.json" in filenames and "modlist.html" in filenames: return "curseforge"

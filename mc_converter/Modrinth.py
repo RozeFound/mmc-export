@@ -1,11 +1,10 @@
-from ast import Mod
 from os import walk
 from pathlib import Path
 from aiohttp import ClientSession
 
 from json import load as parse_json
 
-from async_timeout import asyncio
+import asyncio
 
 from .Helpers.abstractions import ModpackManager
 from .Helpers.resourceAPI import Resource
@@ -75,7 +74,7 @@ class ModrinthManager(ModpackManager):
         from shutil import unpack_archive
         unpack_archive(self.modpack_path, self.temp_dir)
 
-        with open(self.temp_dir / "index.json") as file:
+        with open(self.temp_dir / "modrinth.index.json") as file:
             self.index = parse_json(file)
 
         self.config['name'] = self.index['name']
@@ -165,8 +164,9 @@ class ModrinthManager(ModpackManager):
             self.add_resource(resource)
 
         from json import dump as write_json
-        with open(self.temp_dir / "index.json", 'w') as file:
+        with open(self.temp_dir / "modrinth.index.json", 'w') as file:
             write_json(self.index, file)
 
         from shutil import make_archive
-        make_archive(self.modpack_path / ("MR_" + self.config['name']), 'zip', self.temp_dir, '.')
+        archive_name = make_archive(self.modpack_path / ("MR_" + self.config['name']), 'zip', self.temp_dir, '.')
+        Path(archive_name).rename(archive_name.replace("zip", "mrpack"))
