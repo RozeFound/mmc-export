@@ -139,10 +139,13 @@ class ResourceAPI(object):
 
             else:
                 url = f"{self.curseforge}/addon/{ID}/file/{fileID}"
-                async with self.session.post(url, data = f"[{hash}]") as response:
+                async with self.session.get(url) as response:
                     json = await response.json()
-                    if json['exactMatches']:
-                        return await self._get_curseforge(json['exactMatches'][0], hash)
+                    url = f"{self.curseforge}/fingerprint"              
+                    async with self.session.post(url, data = f"[{json['packageFingerprint']}]") as response:
+                        json = await response.json()
+                        if json['exactMatches']:
+                            return await self._get_curseforge(json['exactMatches'][0], hash)
 
         return None
 
