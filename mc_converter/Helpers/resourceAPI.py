@@ -163,9 +163,9 @@ class ResourceAPI(object):
 
                     json = await response.json()
 
-                    for user in json:
-                        if user['role'] == "Owner":
-                            userID = user['user_id']
+                    for team_member in json:
+                        if team_member['role'] == "Owner":
+                            userID = team_member['user']['id']
                             break
 
                     async with self.session.get(f"{self.modrinth}/user/{userID}") as response:
