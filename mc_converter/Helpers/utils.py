@@ -79,9 +79,9 @@ def get_default_config() -> dict[str]:
     return config
 
 from .abstractions import ModpackManager
-from mc_converter.multimc import MultiMCManager
-from mc_converter.curseforge import CurseForgeManager
-from mc_converter.modrinth import ModrinthManager
+from mc_converter.MultiMC import MultiMCManager
+from mc_converter.CurseForge import CurseForgeManager
+from mc_converter.Modrinth import ModrinthManager
 from mc_converter.packwiz import packwizManager
 
 def get_pack_manager(pack_format: str) -> ModpackManager:
