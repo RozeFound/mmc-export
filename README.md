@@ -58,5 +58,5 @@ Go to Release page, download latest `.whl` file \
 murmurhash2 - Murmur Hash 2 libray - https://pypi.org/project/murmurhash2 \
 aiohttp - Async web interface - https://github.com/aio-libs/aiohttp \
 tomli - Fast pure python toml parser - https://github.com/hukkin/tomli \
-pytoml - The only one toml writer that can handle weird packwiz files - https://github.com/avakar/pytoml
+pytoml - The only one toml writer that can handle weird packwiz files - https://github.com/avakar/pytoml \
 tenacity - Awesome, ease-in-use retrying library - https://github.com/jd/tenacity
