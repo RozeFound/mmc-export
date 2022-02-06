@@ -1,7 +1,7 @@
 from pathlib import Path
 from dataclasses import dataclass
-import re
 from aiohttp import ClientSession
+import tenacity
 
 @dataclass
 class Provider:
@@ -64,11 +64,12 @@ class ResourceAPI(object):
         self.session.headers["Accept"] = "application/json"
         self.session.headers["Content-Type"] = "application/json"
 
-        self.modrinth = "https://api.modrinth.com/api/v1"
+        self.modrinth = "https://api.modrinth.com/api/v2"
         self.curseforge = "https://addons-ecs.forgesvc.net/api/v2"
 
         super().__init__()
     
+    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     async def get(self, path: Path) -> Resource | None:
 
         from .utils import get_hash
@@ -85,7 +86,7 @@ class ResourceAPI(object):
         modrinth = None
         for url in modrinth_links:
             async with self.session.get(url) as response:
-                if response.status == 200:
+                if response.status == 200 or response.status == 504:
                     json = await response.json()
                     modrinth = await self._get_modrinth(json)
                     break
@@ -185,7 +186,7 @@ class ResourceAPI(object):
 
     async def _get_modrinth(self, json: dict[str]) -> Resource:
 
-        ID = json['mod_id']
+        ID = json['project_id']
         fileID = json['id']
 
         filename = json['files'][0]['filename']
@@ -212,9 +213,9 @@ class ResourceAPI(object):
 
                 json = await response.json()
 
-                for user in json:
-                    if user['role'] == "Owner":
-                        userID = user['user_id']
+                for team_member in json:
+                    if team_member['role'] == "Owner":
+                        userID = team_member['user']['id']
                         break
 
                 async with self.session.get(f"{self.modrinth}/user/{userID}") as response:
