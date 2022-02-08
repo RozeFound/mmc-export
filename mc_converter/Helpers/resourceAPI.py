@@ -194,7 +194,7 @@ class ResourceAPI(object):
 
         hashes = json['files'][0]['hashes']
 
-        async with self.session.get(f"{self.modrinth}/mod/{ID}") as response:
+        async with self.session.get(f"{self.modrinth}/project/{ID}") as response:
 
             json = await response.json()
 
