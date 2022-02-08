@@ -217,7 +217,7 @@ class packwizManager(ModpackManager):
         copy_file(file['full_path'], file_path)
 
         data = {
-            "path": file['relative_path'] + "/" + file['filename'],
+            "file": file['relative_path'] + "/" + file['filename'],
             "hash": file['hashes']['sha256']
         }
         
