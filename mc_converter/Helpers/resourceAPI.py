@@ -64,7 +64,7 @@ class ResourceAPI(object):
         self.session.headers["Accept"] = "application/json"
         self.session.headers["Content-Type"] = "application/json"
 
-        self.modrinth = "https://api.modrinth.com/api/v2"
+        self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://addons-ecs.forgesvc.net/api/v2"
 
         super().__init__()

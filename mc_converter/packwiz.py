@@ -16,7 +16,7 @@ class packwizManager(ModpackManager):
 
         self.index = {
             "hash-format": "sha256",
-            "Files": []
+            "files": []
         }
 
         super().__init__(path, session, config)
@@ -206,7 +206,7 @@ class packwizManager(ModpackManager):
             "metafile": True
         }
         
-        self.index['Files'].append(index_data)
+        self.index['files'].append(index_data)
 
     def add_override(self, file: dict[str]) -> None:
 
@@ -221,7 +221,7 @@ class packwizManager(ModpackManager):
             "hash": file['hashes']['sha256']
         }
         
-        self.index['Files'].append(data)
+        self.index['files'].append(data)
 
     def write(self) -> None:
 
