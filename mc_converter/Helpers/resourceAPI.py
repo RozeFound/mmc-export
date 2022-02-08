@@ -69,7 +69,7 @@ class ResourceAPI(object):
 
         super().__init__()
     
-    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
+    @tenacity.retry(stop=tenacity.stop_after_attempt(5), wait=tenacity.wait.wait_fixed(1))
     async def get(self, path: Path) -> Resource | None:
 
         from .utils import get_hash
