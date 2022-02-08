@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mc-converter"
-version = "1.0.3.3"
+version = "1.0.3.4"
 description = ""
 authors = ["RozeFound"]
 license = "MIT"
