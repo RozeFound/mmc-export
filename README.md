@@ -3,6 +3,8 @@ Convert's one minecraft modpack format to another.
 
 Maybe I need to think of a better name...
 
+# If you use this application, please report any issue you encounter, since I don't use it, I don't know if there any problems.
+
 # Features
 
 - Auto detect input modpack format
