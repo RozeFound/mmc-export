@@ -1,26 +1,42 @@
-# modpack-converter
-Convert's one minecraft modpack format to another.
+# MultiMC advanced exporter
 
-Maybe I need to think of a better name...
+Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz)
 
 # If you use this application, please report any issue you encounter, since I don't use it, I don't know if there any problems.
 
 # Features
 
-- Auto detect input modpack format
-- Support convertions to and from:
-    - MultiMC (parsing only)
+- Support convertions to:
     - CurseForge
     - Modrinth
     - packwiz
-- Detects downloadable resourcepacks and shaders (MultiMC only)
+- Detects downloadable resourcepacks and shaders
+- Supports github parsing[¹](#github-rate-limits)
+- Loose modrinth search
 - User friendly toml config
 - Multiple output formats at once
+
+---
+### Github rate limits
+
+Github have limited requests per hour to 60, that means that if you have more than 60 mods, the rest will be excluded from github search.
+
+To solve this, you can authorize in application. \
+You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, example:
+```
+mmc-export -i modpack -f format --github_auth username:token
+```
+I recommend you to store tokens in enviroment variables for security reasons.
 
 # How to Use
 
 ```
-mc-converter [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT]
+mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT]
+```
+
+Example: 
+```
+mmc-export -i modpack.zip -c config.toml -f curseforge modrinth -o converted_modpacks
 ```
 
 ## Explanation:
@@ -29,31 +45,20 @@ mc-converter [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT]
 -h --help: prints help
 -i --input: specifies input file (mostly zip file)
 -c --config: specifies config file, used for fill the gaps like description or files not in modrinth on curseforge example can be found in this repository.
--f --format: soecifies formats to convert, must be separated by space.
+-f --format: soecifies formats to convert, must be separated by spaces.
 -o --output: specifies output directory, where converted zip files will be stored. By default current working directory will be used.
 ```
 
-Avaliable formats:     - `curseforge, modrinth, packwiz, intermediate`
+Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case sensetive)
 
-`intermediate` must be used only for debuging, can contain sensetive information
-
-Example: 
-```
-mc-converter -i MyLovelyMultiMcModpack.zip -c config.toml -f curseforge modrinth -o converted_modpacks
-```
+`intermediate` must be used only for debuging, can contain sensetive information like user name.
 
 # How to Install
 
 ## From PyPI
 ```
-pip install mc-converter
+pip install mmc-export
 ```
-## From `.whl` file
-Go to Release page, download latest `.whl` file \
- And install it via the following comand:
- ```
- pip install mc_converter_{version}.whl
- ```
  
  # Credits
 
