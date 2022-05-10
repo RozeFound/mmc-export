@@ -3,7 +3,7 @@ from tomli import loads as parse_toml
 from ctypes import ArgumentError
 from pathlib import Path
 
-from .structures import Intermediate
+from .structures import Intermediate, Resource
 
 def get_hash(path: Path, type: str = "sha256") -> str:
         
@@ -46,14 +46,14 @@ def read_config(cfg_path: Path, modpack_info: Intermediate):
                         resource.name = cfg_resource['name']
                         resource.file.name = cfg_resource['filename']
 
-                        resource.providers['Github'](
+                        resource.providers['Github'] = Resource.Provider(
                             ID     = None,
                             fileID = None,
                             url    = cfg_resource['url'],
                             slug   = secure_filename(resource.name).lower(),
                             author = None)
 
-                        lost_resources.pop(resource)
+                        lost_resources.remove(resource)
                         break
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)
