@@ -4,7 +4,7 @@ Since MultiMC export features are very limited, I created a script that solves t
 
 # Features
 
-- Support convertions to:
+- Support conversion to:
     - CurseForge
     - Modrinth
     - packwiz
