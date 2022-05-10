@@ -1,18 +1,23 @@
 [tool.poetry]
-name = "mc-converter"
-version = "1.0.3.5"
+name = "mmc-export"
+version = "2.0.0"
 description = ""
 authors = ["RozeFound"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/RozeFound/modpack-converter"
-homepage = "https://github.com/RozeFound/modpack-converter"
+repository = "https://github.com/RozeFound/mmc-export"
+homepage = "https://github.com/RozeFound/mmc-export"
 
 keywords = [
     "minecraft",
     "mods",
     "modpack",
-    "converter"
+    "converter",
+    "MultiMC"
+]
+
+packages = [
+    { include = "mmc_export" }
 ]
 
 [tool.poetry.dependencies]
@@ -22,13 +27,15 @@ aiohttp = "^3.7.4"
 tomli = "^1.2.1"
 pytoml = "^0.1.21"
 tenacity = "^8.0.1"
+Werkzeug = "^2.1.2"
+jsonpickle = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.0"
 flake8 = "^4.0.1"
 
 [tool.poetry.scripts]
-mc-converter = "mc_converter:main"
+mmc-export = "mmc_export:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
