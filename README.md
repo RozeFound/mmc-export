@@ -2,8 +2,6 @@
 
 Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz)
 
-# If you use this application, please report any issue you encounter, since I don't use it, I don't know if there any problems.
-
 # Features
 
 - Support convertions to:
