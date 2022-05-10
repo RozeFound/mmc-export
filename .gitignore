@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 # Custom
+tests
 .vscode
-test_data
 poetry.lock
