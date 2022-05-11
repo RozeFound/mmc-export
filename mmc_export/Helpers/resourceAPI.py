@@ -16,7 +16,7 @@ class ResourceAPI(object):
         self.session = session
         self.modpack_info = modpack_info
 
-        # Not secure bot not plain text either, just a comprimise.
+        # Not secure but not plain text either, just a compromise.
 
         token = b'gAAAAABifAIMNFaSNF8epJIDWIv2nSe3zxARkMmViCa1ZCvtwoRqhuB1LYjjJsAstwTvP4dEOSm6Wj0SRDWr3PPwZz5eEBt_1fU8uIaninakGYFNSarEduD6YfoA-rm28qUQHYpVcuae3lj8sYrs_87P6F4s3gBrYg=='
         super_secret_key_that_must_not_be_in_code_but_it_is_here_because_why_not = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
