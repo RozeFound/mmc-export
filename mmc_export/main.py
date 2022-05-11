@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
-from aiohttp import ClientSession, TCPConnector, BasicAuth
+from aiohttp_client_cache import CachedSession
+from aiohttp_client_cache.backends import FileBackend
+from aiohttp import TCPConnector, BasicAuth
 from importlib import import_module
 from pathlib import Path
 
@@ -25,18 +27,21 @@ async def run():
     arg_parser.add_argument('-o', '--output', dest='output', type=Path, help='Specify output directory (optional)', default=Path.cwd())
     arg_parser.add_argument('--github_auth', dest='github_auth', type=str, help='Github Auth in format username:token')
     arg_parser.add_argument('--modrinth_search', dest="modrinth_search", type=str, choices=("exact", "accurate", "loose"), help=modrinth_search_help, default="exact")
+    arg_parser.add_argument('--exclude_providers', dest="excluded_providers", type=str, nargs="+", choices=formats, help="List of providers you which to exclude from search", default=str())
     args = arg_parser.parse_args()
 
     if not args.input.exists(): exit("Invalid input!")
 
     ResourceAPI.modrinth_search_type = args.modrinth_search
+    ResourceAPI.excluded_providers = args.excluded_providers
 
     if args.github_auth:
         login, password = args.github_auth.split(":")
         auth = BasicAuth(login, password, "utf-8")
     else: auth = None
 
-    async with ClientSession(connector=TCPConnector(limit=0), auth=auth) as session:
+    cache = FileBackend(Path().home() / ".cache/mmc-export",allowed_methods=("GET","POST", "HEAD") , cache_control=True)
+    async with CachedSession(cache=cache,connector=TCPConnector(limit=0), auth=auth) as session:
 
         parser = Parser(args.input, session)
         intermediate = await parser.parse()

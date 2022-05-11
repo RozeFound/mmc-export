@@ -10,6 +10,7 @@ from .structures import Intermediate, Resource
 class ResourceAPI(object):
 
     modrinth_search_type: str
+    excluded_providers: list[str]
 
     def __init__(self, session: ClientSession, modpack_info: Intermediate) -> None:
 
@@ -73,6 +74,8 @@ class ResourceAPI(object):
         return resource
 
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
+
+        if "CurseForge" in self.excluded_providers: return
 
         async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
             json = await response.json()
@@ -138,7 +141,7 @@ class ResourceAPI(object):
 
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
-        if self.modrinth_exeeded_rate_limit: return
+        if self.modrinth_exeeded_rate_limit or "Modrinth" in self.excluded_providers: return
 
         modrinth_links = (
             f"{self.modrinth}/version_file/{resource.file.hash.sha512}?algorithm=sha512",
@@ -151,7 +154,6 @@ class ResourceAPI(object):
                     version_info = await response.json()
                     break
                 elif int(response.headers.get("X-RateLimit-Remaining")) <= 0:
-                    print("You exeeded modrinth rate limit, try again in a minute.")
                     self.modrinth_exeeded_rate_limit = True
                     return
 
@@ -182,7 +184,7 @@ class ResourceAPI(object):
 
         from urllib.parse import urlparse
 
-        if "contact" not in meta or self.github_exeeded_rate_limit: return
+        if "contact" not in meta or self.github_exeeded_rate_limit or "Github" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
 
@@ -196,7 +198,6 @@ class ResourceAPI(object):
 
             if response.status != 200:
                 if int(response.headers.get("X-RateLimit-Remaining")) <= 0:
-                    print("You exeeded github rate limit, authorize or try again in an hour.")
                     self.github_exeeded_rate_limit = True
                 return
 
