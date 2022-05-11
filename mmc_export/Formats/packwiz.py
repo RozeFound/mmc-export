@@ -27,50 +27,52 @@ class packwiz(Writer):
             "update": {}
         }
 
-        match resource.providers:
+        for provider_tuple in resource.providers.items():
 
-            case {"Modrinth": provider}: 
+            match provider_tuple:
 
-                slug = provider.slug
+                case "Modrinth", provider: 
 
-                data['update']['modrinth'] = {
-                    "mod-id": provider.ID,
-                    "version": provider.fileID
-                }
+                    slug = provider.slug
 
-                data['download'] = {
-                    "url": provider.url,
-                    "hash-format": "sha512",
-                    "hash": resource.file.hash.sha512
-                }
-
-            case {"CurseForge": provider}:
-
-                slug = provider.slug
-
-                data['update']['curseforge'] = {
-                    "file-id": provider.fileID,
-                    "project-id": provider.ID,
-                    "release-channel": "beta"
-                }
-
-                if "download" not in data:
-                    data['download'] = {
-                        "url": provider.url,
-                        "hash-format": "murmu2",
-                        "hash": resource.file.hash.murmur2
+                    data['update']['modrinth'] = {
+                        "mod-id": provider.ID,
+                        "version": provider.fileID
                     }
 
-            case {"Github": provider}: 
-
-                slug = provider.slug
-
-                if "download" not in data:
                     data['download'] = {
                         "url": provider.url,
-                        "hash-format": "sha256",
-                        "hash": resource.file.hash.sha256
+                        "hash-format": "sha512",
+                        "hash": resource.file.hash.sha512
                     }
+
+                case "CurseForge", provider:
+
+                    slug = provider.slug
+
+                    data['update']['curseforge'] = {
+                        "file-id": provider.fileID,
+                        "project-id": provider.ID,
+                        "release-channel": "beta"
+                    }
+
+                    if "download" not in data:
+                        data['download'] = {
+                            "url": provider.url,
+                            "hash-format": "murmu2",
+                            "hash": resource.file.hash.murmur2
+                        }
+
+                case "Github", provider: 
+
+                    slug = provider.slug
+
+                    if "download" not in data:
+                        data['download'] = {
+                            "url": provider.url,
+                            "hash-format": "sha256",
+                            "hash": resource.file.hash.sha256
+                        }
         
         toml_path = self.temp_dir / resource.file.relativePath / (slug + ".toml")
         toml_path.parent.mkdir(parents=True, exist_ok=True)

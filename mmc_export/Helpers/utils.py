@@ -29,32 +29,36 @@ def get_hash(path: Path, type: str = "sha256") -> str:
 
 def read_config(cfg_path: Path, modpack_info: Intermediate):
  
-    config = parse_toml(cfg_path.read_bytes()) if cfg_path is not None else None
+    config = parse_toml(cfg_path.read_text()) if cfg_path is not None else None
     lost_resources = [res for res in modpack_info.resources if not res.providers]
 
-    match config:
-        case {'name': name}: modpack_info.name = name
-        case {'author': author}: modpack_info.author = author
-        case {'version': version}: modpack_info.version = version
-        case {'description': description}: modpack_info.description = description
+    for cfg_tuple in config.items():
 
-        case {'Resource': resources}: 
-            for resource in lost_resources:
-                for cfg_resource in resources:
-                    if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
+        match cfg_tuple:
 
-                        resource.name = cfg_resource['name']
-                        resource.file.name = cfg_resource['filename']
+            case 'name', name: modpack_info.name = name
+            case 'author', author: modpack_info.author = author
+            case 'version', version: modpack_info.version = version
+            case 'description', description: modpack_info.description = description
 
-                        resource.providers['Github'] = Resource.Provider(
-                            ID     = None,
-                            fileID = None,
-                            url    = cfg_resource['url'],
-                            slug   = secure_filename(resource.name).lower(),
-                            author = None)
+            case 'Resource', resources: 
+                for resource in lost_resources:
+                    for cfg_resource in resources:
+                        if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
 
-                        lost_resources.remove(resource)
-                        break
+                            resource.name = cfg_resource['name']
+                            resource.file.name = cfg_resource['filename']
+
+                            resource.providers['Github'] = Resource.Provider(
+                                ID     = None,
+                                fileID = None,
+                                url    = cfg_resource['url'],
+                                slug   = secure_filename(resource.name).lower(),
+                                author = None)
+
+                            lost_resources.remove(resource)
+                            break
+
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)
         modpack_info.overrides.append(resource.file)

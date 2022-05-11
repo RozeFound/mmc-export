@@ -16,14 +16,22 @@ class ResourceAPI(object):
         self.session = session
         self.modpack_info = modpack_info
 
+        # Not secure bot not plain text either, just a comprimise.
+
+        token = b'gAAAAABifAIMNFaSNF8epJIDWIv2nSe3zxARkMmViCa1ZCvtwoRqhuB1LYjjJsAstwTvP4dEOSm6Wj0SRDWr3PPwZz5eEBt_1fU8uIaninakGYFNSarEduD6YfoA-rm28qUQHYpVcuae3lj8sYrs_87P6F4s3gBrYg=='
+        super_secret_key_that_must_not_be_in_code_but_it_is_here_because_why_not = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
+        from cryptography.fernet import Fernet
+
+        self.session.headers["x-api-key"] = Fernet(super_secret_key_that_must_not_be_in_code_but_it_is_here_because_why_not).decrypt(token).decode()
         self.session.headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0"
-        self.session.headers["Accept"] = "application/json"
         self.session.headers["Content-Type"] = "application/json"
+        self.session.headers["Accept"] = "application/json"
 
         self.github = "https://api.github.com"
         self.modrinth = "https://api.modrinth.com/v2"
-        self.curseforge = "https://addons-ecs.forgesvc.net/api/v2"
+        self.curseforge = "https://api.curseforge.com/v1"
 
+        self.modrinth_exeeded_rate_limit = False
         self.github_exeeded_rate_limit = False
 
         super().__init__()
@@ -66,24 +74,24 @@ class ResourceAPI(object):
 
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
 
-        async with self.session.post(f"{self.curseforge}/fingerprint", data = f"[{resource.file.hash.murmur2}]") as response:
+        async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
             json = await response.json()
-            if matches := json['exactMatches']:
+            if matches := json['data']['exactMatches']:
                 version_info = matches[0]
             else: return
 
-        async with self.session.get(f"{self.curseforge}/addon/{version_info['id']}") as response:
+        async with self.session.get(f"{self.curseforge}/mods/{version_info['id']}") as response:
 
             addon_info = await response.json()
 
-            resource.name = addon_info['name']
+            resource.name = addon_info['data']['name']
 
             resource.providers['CurseForge'] = Resource.Provider(
                 ID     = version_info['id'],
                 fileID = version_info['file']['id'],
                 url    = version_info['file']['downloadUrl'],
-                slug   = addon_info['slug'] if 'slug' in addon_info else meta['id'],
-                author = addon_info['authors'][0]['name'])
+                slug   = addon_info['data']['slug'] if 'slug' in addon_info['data'] else meta['id'],
+                author = addon_info['data']['authors'][0]['name'])
 
     async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
 
@@ -130,6 +138,8 @@ class ResourceAPI(object):
 
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
+        if self.modrinth_exeeded_rate_limit: return
+
         modrinth_links = (
             f"{self.modrinth}/version_file/{resource.file.hash.sha512}?algorithm=sha512",
             f"{self.modrinth}/version_file/{resource.file.hash.sha1}?algorithm=sha1"
@@ -140,6 +150,11 @@ class ResourceAPI(object):
                 if response.status == 200 or response.status == 504:
                     version_info = await response.json()
                     break
+                elif int(response.headers.get("X-RateLimit-Remaining")) <= 0:
+                    print("You exeeded modrinth rate limit, try again in a minute.")
+                    self.modrinth_exeeded_rate_limit = True
+                    return
+
         else: 
             if self.modrinth_search_type != "exact": await self._get_modrinth_loose(meta, resource)
             return

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.0.0"
+version = "2.1.0"
 description = ""
 authors = ["RozeFound"]
 license = "MIT"
@@ -29,6 +29,7 @@ pytoml = "^0.1.21"
 tenacity = "^8.0.1"
 Werkzeug = "^2.1.2"
 jsonpickle = "^2.1.0"
+cryptography = "^37.0.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.0"

@@ -17,6 +17,10 @@ class Modrinth(Writer):
         data = {
             "path": relative_path.as_posix(),
             "hashes": resource.file.hash.as_dict(),
+            "env": {
+                "client": resource.side.client,
+                "seriver": resource.side.server
+            },
             "downloads": [provider.url for _, provider in resource.providers.items()]
         }
 
