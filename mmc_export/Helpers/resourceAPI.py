@@ -34,7 +34,6 @@ class ResourceAPI(object):
 
         super().__init__()
     
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def get(self, path: Path) -> Resource:
 
         meta = {
@@ -75,7 +74,8 @@ class ResourceAPI(object):
 
         await asyncio.gather(*futures)
         return resource
-
+    
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
 
         if "cf" in self.excluded_providers: return
@@ -99,11 +99,12 @@ class ResourceAPI(object):
                 slug   = addon_info['data']['slug'] if 'slug' in addon_info['data'] else meta['id'],
                 author = addon_info['data']['authors'][0]['name'])
 
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
 
         if self.modrinth_search_type == "loose":      
             async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
-                if response.status != 200 and response.status != 504: return
+                if response.status != 200 and response.status != 504 and response.status != 423: return
                 json = await response.json()
                 if hits := json['hits']: addon_id = hits[0]['project_id']
                 else: return
@@ -113,7 +114,7 @@ class ResourceAPI(object):
         url = f'{self.modrinth}/project/{addon_id}/version?loaders=["{self.modpack_info.modloader.type}"]&game_versions=["{self.modpack_info.minecraft_version}"]'
 
         async with self.session.get(url) as response:
-            if response.status != 200 and response.status != 504: return
+            if response.status != 200 and response.status != 504 and response.status != 423: return
 
             versions_info = await response.json()
 
@@ -130,12 +131,13 @@ class ResourceAPI(object):
 
                     return
 
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
         if "mr" in self.excluded_providers: return
 
         async with self.session.get(f"{self.modrinth}/version_file/{resource.file.hash.sha1}") as response: 
-            if response.status != 200 and response.status != 504: 
+            if response.status != 200 and response.status != 504 and response.status != 423: 
                 if self.modrinth_search_type != "exact":
                     await self._get_modrinth_loose(meta, resource)
                 return
@@ -149,6 +151,7 @@ class ResourceAPI(object):
                     slug   = meta['id'],
                     author = None)         
 
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self, meta: dict, resource: Resource) -> None:
 
         from urllib.parse import urlparse
