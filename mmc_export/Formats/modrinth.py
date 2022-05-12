@@ -17,10 +17,6 @@ class Modrinth(Writer):
         data = {
             "path": relative_path.as_posix(),
             "hashes": resource.file.hash.as_dict(),
-            "env": {
-                "client": resource.side.client,
-                "seriver": resource.side.server
-            },
             "downloads": [provider.url for _, provider in resource.providers.items()]
         }
 
@@ -41,6 +37,7 @@ class Modrinth(Writer):
 
         match self.modpack_info.modloader.type:
             case "fabric": modloader = "fabric-loader"
+            case "quilt": modloader = "quilt-loader"
             case _: modloader = self.modpack_info.modloader.type
         
         self.index = {

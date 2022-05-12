@@ -1,4 +1,3 @@
-from werkzeug.utils import secure_filename
 from tomli import loads as parse_toml
 from ctypes import ArgumentError
 from pathlib import Path
@@ -18,46 +17,44 @@ def get_hash(path: Path, type: str = "sha256") -> str:
         case "sha1": hash = sha1(data).hexdigest()
         case "sha256": hash = sha256(data).hexdigest()
         case "sha512": hash = sha512(data).hexdigest()
-
         case "murmur2": 
             data = bytes([b for b in data if b not in (9, 10, 13, 32)])
             hash = murmur2(data, seed=1)
-
         case _: raise(ArgumentError("Incorrect hash type!"))
 
     return str(hash)
 
 def read_config(cfg_path: Path, modpack_info: Intermediate):
  
-    config = parse_toml(cfg_path.read_text()) if cfg_path is not None else None
     lost_resources = [res for res in modpack_info.resources if not res.providers]
 
-    for cfg_tuple in config.items():
+    if cfg_path is not None and cfg_path.exists():
+        config = parse_toml(cfg_path.read_text())
+        for cfg_tuple in config.items():
 
-        match cfg_tuple:
+            match cfg_tuple:
 
-            case 'name', name: modpack_info.name = name
-            case 'author', author: modpack_info.author = author
-            case 'version', version: modpack_info.version = version
-            case 'description', description: modpack_info.description = description
+                case 'name', name: modpack_info.name = name
+                case 'author', author: modpack_info.author = author
+                case 'version', version: modpack_info.version = version
+                case 'description', description: modpack_info.description = description
+                case 'Resource', resources: 
+                    for resource in lost_resources:
+                        for cfg_resource in resources:
+                            if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
 
-            case 'Resource', resources: 
-                for resource in lost_resources:
-                    for cfg_resource in resources:
-                        if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
+                                resource.name = cfg_resource['name']
+                                resource.file.name = cfg_resource['filename']
 
-                            resource.name = cfg_resource['name']
-                            resource.file.name = cfg_resource['filename']
+                                resource.providers['Github'] = Resource.Provider(
+                                    ID     = None,
+                                    fileID = None,
+                                    url    = cfg_resource['url'],
+                                    slug   = None,
+                                    author = None)
 
-                            resource.providers['Github'] = Resource.Provider(
-                                ID     = None,
-                                fileID = None,
-                                url    = cfg_resource['url'],
-                                slug   = secure_filename(resource.name).lower(),
-                                author = None)
-
-                            lost_resources.remove(resource)
-                            break
+                                lost_resources.remove(resource)
+                                break
 
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)

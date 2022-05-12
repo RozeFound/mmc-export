@@ -22,7 +22,6 @@ class packwiz(Writer):
         data = {
             "name": resource.name,
             "filename": resource.file.name,
-            "side": resource.side.summary,
 
             "update": {}
         }
@@ -73,6 +72,9 @@ class packwiz(Writer):
                             "hash-format": "sha256",
                             "hash": resource.file.hash.sha256
                         }
+
+        from werkzeug.utils import secure_filename
+        if slug is None: slug = secure_filename(resource.name)
         
         toml_path = self.temp_dir / resource.file.relativePath / (slug + ".toml")
         toml_path.parent.mkdir(parents=True, exist_ok=True)

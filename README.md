@@ -22,7 +22,7 @@ Github have limited requests per hour to 60, this means that if you have more th
 To solve this, you can authorize in application. \
 You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, example:
 ```
-mmc-export -i modpack -f format --github_auth username:token
+mmc-export -i modpack -f format --github-auth username:token
 ```
 I recommend you to store tokens in enviroment variables for security reasons.
 

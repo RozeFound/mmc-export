@@ -37,22 +37,28 @@ class ResourceAPI(object):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def get(self, path: Path) -> Resource:
 
-        try:
-            with ZipFile(path) as modArchive:
-                data = modArchive.read("fabric.mod.json")
-                meta = parse_json(data, strict=False)
-        except KeyError:
-            meta = {
+        meta = {
                 "name": path.stem,
-                "id": "unknown",
+                "id": None,
                 "version": "0.0.0"
             }
+
+        if path.suffix == ".jar":
+            with ZipFile(path) as modArchive:
+                filenames = [Path(file).name for file in modArchive.namelist()]
+                if "fabric.mod.json" in filenames:
+                    data = modArchive.read("fabric.mod.json")
+                    meta = parse_json(data, strict=False)
+                elif "pack.mcmeta" in filenames:
+                    data = modArchive.read("pack.mcmeta")
+                    json = parse_json(data, strict=False)
+                    meta['name'] = json['pack']['description']
+                   
 
         resource = Resource(meta['name'])
         resource.file.path = path
         resource.file.name = path.name
         resource.file.relativePath = path.parent.name
-        resource.side = Resource.Side("both", "optional", "optional")
 
         from .utils import get_hash
 
@@ -72,7 +78,7 @@ class ResourceAPI(object):
 
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
 
-        if "CurseForge" in self.excluded_providers: return
+        if "cf" in self.excluded_providers: return
 
         async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
             json = await response.json()
@@ -81,9 +87,9 @@ class ResourceAPI(object):
             else: return
 
         async with self.session.get(f"{self.curseforge}/mods/{version_info['id']}") as response:
+            if response.status != 200 and response.status != 504: return
 
             addon_info = await response.json()
-
             resource.name = addon_info['data']['name']
 
             resource.providers['CurseForge'] = Resource.Provider(
@@ -104,80 +110,50 @@ class ResourceAPI(object):
         elif self.modrinth_search_type == "accurate": addon_id = meta['id']
         else: return
 
-        async with self.session.get(f"{self.modrinth}/project/{addon_id}") as response: 
+        url = f'{self.modrinth}/project/{addon_id}/version?loaders=["{self.modpack_info.modloader.type}"]&game_versions=["{self.modpack_info.minecraft_version}"]'
+
+        async with self.session.get(url) as response:
             if response.status != 200 and response.status != 504: return
 
-            addon_info = await response.json()
+            versions_info = await response.json()
 
-            resource.name = addon_info['title']
+            for version_info in versions_info:
 
-            resource.side.client = addon_info['client_side']
-            resource.side.server = addon_info['server_side']
+                if meta['version'] in version_info['version_number']:
 
-            if resource.side.client == "required": resource.side.summary = "client"
-            elif resource.side.server == "required": resource.side.summary = "server"
+                    resource.providers['Modrinth'] = Resource.Provider(
+                        ID     = addon_id,
+                        fileID = version_info['id'],
+                        url    = version_info['files'][0]['url'],
+                        slug   = meta['id'],
+                        author = None)
 
-            url = f'{self.modrinth}/project/{addon_id}/version?loaders=["{self.modpack_info.modloader.type}"]&game_versions=["{self.modpack_info.minecraft_version}"]'
-
-            async with self.session.get(url) as response:
-
-                versions_info = await response.json()
-
-                for version_info in versions_info:
-
-                    if meta['version'] in version_info['version_number']:
-
-                        resource.providers['Modrinth'] = Resource.Provider(
-                            ID     = addon_id,
-                            fileID = version_info['id'],
-                            url    = version_info['files'][0]['url'],
-                            slug   = addon_info['slug'] if 'slug' in addon_info else meta['id'],
-                            author = None)
-
-                        return
+                    return
 
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
-        if "Modrinth" in self.excluded_providers: return
+        if "mr" in self.excluded_providers: return
 
-        modrinth_links = (
-            f"{self.modrinth}/version_file/{resource.file.hash.sha512}?algorithm=sha512",
-            f"{self.modrinth}/version_file/{resource.file.hash.sha1}?algorithm=sha1"
-        )
-        
-        for url in modrinth_links:
-            async with self.session.get(url) as response:
-                if response.status == 200 or response.status == 504:
-                    version_info = await response.json()
-                    break
-        else: 
-            if self.modrinth_search_type != "exact": await self._get_modrinth_loose(meta, resource)
-            return
+        async with self.session.get(f"{self.modrinth}/version_file/{resource.file.hash.sha1}") as response: 
+            if response.status != 200 and response.status != 504: 
+                if self.modrinth_search_type != "exact":
+                    await self._get_modrinth_loose(meta, resource)
+                return
 
-        async with self.session.get(f"{self.modrinth}/project/{version_info['project_id']}") as response:       
-
-            addon_info = await response.json()
-
-            resource.name = addon_info['title']
-
-            resource.side.client = addon_info['client_side']
-            resource.side.server = addon_info['server_side']
-
-            if resource.side.client == "required": resource.side.summary = "client"
-            elif resource.side.server == "required": resource.side.summary = "server"
+            version_info = await response.json()
 
             resource.providers['Modrinth'] = Resource.Provider(
-                ID     = version_info['project_id'],
-                fileID = version_info['id'],
-                url    = version_info['files'][0]['url'],
-                slug   = addon_info['slug'] if 'slug' in addon_info else meta['id'],
-                author = None)
+                    ID     = version_info['project_id'],
+                    fileID = version_info['id'],
+                    url    = version_info['files'][0]['url'],
+                    slug   = meta['id'],
+                    author = None)         
 
     async def _get_github(self, meta: dict, resource: Resource) -> None:
 
         from urllib.parse import urlparse
 
-        if "contact" not in meta or "Github" in self.excluded_providers: return
+        if "contact" not in meta or "gh" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
 

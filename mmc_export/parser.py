@@ -52,8 +52,8 @@ class Parser(Format):
 
     def get_override(self, path: Path):
 
-        try: root_dir_id = path.parts.index("minecraft")
-        except ValueError: return
+        if "minecraft" not in path.parts: return
+        root_dir_id = path.parts.index("minecraft")
         relative_path = path.relative_to(*path.parts[:root_dir_id + 1]).parent
 
         file = File(
@@ -75,9 +75,8 @@ class Parser(Format):
         futures = list()
         overrides = list()
 
-        for file in self.temp_dir.glob("**/*"):
-            if not file.is_file(): continue
-            if file.parent.name in downloadable_content: 
+        for file in [file for file in self.temp_dir.glob("**/*") if file.is_file()]:
+            if file.parent.name in downloadable_content and file.suffix != ".txt": 
                 future = self.get_resource(file)
                 futures.append(future)
             else: overrides.append(file)

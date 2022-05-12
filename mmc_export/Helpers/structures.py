@@ -37,12 +37,6 @@ class Resource:
     name: str = None
 
     @dataclass
-    class Side:
-        summary: str = None
-        client: str = None
-        server: str = None
-
-    @dataclass
     class Provider:
      
         ID: str | int = None
@@ -51,8 +45,7 @@ class Resource:
 
         slug: str = None
         author: str = None
-
-    side: Side = field(default_factory=Side)
+        
     file: File = field(default_factory=File)
     providers: dict[Literal['Modrinth', 'CurseForge', 'Github'], Provider] = field(default_factory=dict)
 
