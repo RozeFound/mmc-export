@@ -32,9 +32,6 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.modrinth_exeeded_rate_limit = False
-        self.github_exeeded_rate_limit = False
-
         super().__init__()
     
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
@@ -141,7 +138,7 @@ class ResourceAPI(object):
 
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
-        if self.modrinth_exeeded_rate_limit or "Modrinth" in self.excluded_providers: return
+        if "Modrinth" in self.excluded_providers: return
 
         modrinth_links = (
             f"{self.modrinth}/version_file/{resource.file.hash.sha512}?algorithm=sha512",
@@ -153,10 +150,6 @@ class ResourceAPI(object):
                 if response.status == 200 or response.status == 504:
                     version_info = await response.json()
                     break
-                elif int(response.headers.get("X-RateLimit-Remaining")) <= 0:
-                    self.modrinth_exeeded_rate_limit = True
-                    return
-
         else: 
             if self.modrinth_search_type != "exact": await self._get_modrinth_loose(meta, resource)
             return
@@ -184,7 +177,7 @@ class ResourceAPI(object):
 
         from urllib.parse import urlparse
 
-        if "contact" not in meta or self.github_exeeded_rate_limit or "Github" in self.excluded_providers: return
+        if "contact" not in meta or "Github" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
 
@@ -195,11 +188,7 @@ class ResourceAPI(object):
         else: return
 
         async with self.session.get(f"https://api.github.com/repos/{owner}/{repo}/releases") as response:
-
-            if response.status != 200:
-                if int(response.headers.get("X-RateLimit-Remaining")) <= 0:
-                    self.github_exeeded_rate_limit = True
-                return
+            if response.status != 200 and response.status != 504: return
 
             for release in await response.json():
                 for asset in release['assets']:
