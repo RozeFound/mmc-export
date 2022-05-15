@@ -30,21 +30,6 @@ class packwiz(Writer):
 
             match provider_tuple:
 
-                case "Modrinth", provider: 
-
-                    slug = provider.slug
-
-                    data['update']['modrinth'] = {
-                        "mod-id": provider.ID,
-                        "version": provider.fileID
-                    }
-
-                    data['download'] = {
-                        "url": provider.url,
-                        "hash-format": "sha512",
-                        "hash": resource.file.hash.sha512
-                    }
-
                 case "CurseForge", provider:
 
                     slug = provider.slug
@@ -55,11 +40,26 @@ class packwiz(Writer):
                         "release-channel": "beta"
                     }
 
+                    data['download'] = {
+                        "url": provider.url,
+                        "hash-format": "murmu2",
+                        "hash": resource.file.hash.murmur2
+                    }
+
+                case "Modrinth", provider: 
+
+                    slug = provider.slug
+
+                    data['update']['modrinth'] = {
+                        "mod-id": provider.ID,
+                        "version": provider.fileID
+                    }
+
                     if "download" not in data:
                         data['download'] = {
                             "url": provider.url,
-                            "hash-format": "murmu2",
-                            "hash": resource.file.hash.murmur2
+                            "hash-format": "sha512",
+                            "hash": resource.file.hash.sha512
                         }
 
                 case "Github", provider: 

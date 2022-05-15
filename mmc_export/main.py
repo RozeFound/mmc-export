@@ -41,8 +41,8 @@ async def run():
         auth = BasicAuth(login, password, "utf-8")
     else: auth = None
 
-    cache = FileBackend(Path().home() / ".cache/mmc-export", allowed_methods=("GET", "POST", "HEAD"))
-    async with CachedSession(cache=cache,connector=TCPConnector(limit=0), auth=auth) as session:
+    cache = FileBackend("mmc-export", use_temp=True, allowed_methods=("GET", "POST", "HEAD"))
+    async with CachedSession(cache=cache, connector=TCPConnector(limit=0), auth=auth) as session:
 
         parser = Parser(args.input, session)
         intermediate = await parser.parse()

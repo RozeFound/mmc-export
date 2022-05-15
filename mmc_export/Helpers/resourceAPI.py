@@ -1,3 +1,4 @@
+import pickle
 import asyncio
 import tenacity as tn
 from pathlib import Path
@@ -5,6 +6,7 @@ from zipfile import ZipFile
 from aiohttp import ClientSession
 from json import loads as parse_json
 
+from .utils import get_hash
 from .structures import Intermediate, Resource
 
 class ResourceAPI(object):
@@ -20,11 +22,10 @@ class ResourceAPI(object):
         # Not secure but not plain text either, just a compromise.
 
         token = b'gAAAAABifAIMNFaSNF8epJIDWIv2nSe3zxARkMmViCa1ZCvtwoRqhuB1LYjjJsAstwTvP4dEOSm6Wj0SRDWr3PPwZz5eEBt_1fU8uIaninakGYFNSarEduD6YfoA-rm28qUQHYpVcuae3lj8sYrs_87P6F4s3gBrYg=='
-        super_secret_key_that_must_not_be_in_code_but_it_is_here_because_why_not = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
+        key = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
         from cryptography.fernet import Fernet
 
-        self.session.headers["x-api-key"] = Fernet(super_secret_key_that_must_not_be_in_code_but_it_is_here_because_why_not).decrypt(token).decode()
-        self.session.headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0"
+        self.session.headers["X-Api-Key"] = Fernet(key).decrypt(token).decode()
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
 
@@ -32,39 +33,46 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
+        self.cache_directory = Path().home() / ".cache/mmc-export"
+        self.cache_directory.mkdir(parents=True, exist_ok=True)
+
         super().__init__()
     
     async def get(self, path: Path) -> Resource:
 
-        meta = {
-                "name": path.stem,
-                "id": None,
-                "version": "0.0.0"
-            }
+        cache_file = self.cache_directory / get_hash(path, "xxhash")
+        if cache_file.exists():
+            data = cache_file.read_bytes()
+            meta, resource = pickle.loads(data)
+        else:
+            meta = {"name": path.stem,
+                    "id": None,
+                    "version": "0.0.0"}
 
-        if path.suffix == ".jar":
-            with ZipFile(path) as modArchive:
-                filenames = [Path(file).name for file in modArchive.namelist()]
-                if "fabric.mod.json" in filenames:
-                    data = modArchive.read("fabric.mod.json")
-                    meta = parse_json(data, strict=False)
-                elif "pack.mcmeta" in filenames:
-                    data = modArchive.read("pack.mcmeta")
-                    json = parse_json(data, strict=False)
-                    meta['name'] = json['pack']['description']
-                   
+            if path.suffix == ".jar":
+                with ZipFile(path) as modArchive:
+                    filenames = [Path(file).name for file in modArchive.namelist()]
+                    if "fabric.mod.json" in filenames:
+                        data = modArchive.read("fabric.mod.json")
+                        meta = parse_json(data, strict=False)
+                    elif "pack.mcmeta" in filenames:
+                        data = modArchive.read("pack.mcmeta")
+                        json = parse_json(data, strict=False)
+                        meta['name'] = json['pack']['description']
+                    
 
-        resource = Resource(meta['name'])
+            resource = Resource(meta['name'])
+            resource.file.hash.sha1 = get_hash(path, "sha1")
+            resource.file.hash.sha256 = get_hash(path, "sha256")
+            resource.file.hash.sha512 = get_hash(path, "sha512")
+            resource.file.hash.murmur2 = get_hash(path, "murmur2")
+
+            data = pickle.dumps((meta, resource))
+            cache_file.write_bytes(data)
+
         resource.file.path = path
         resource.file.name = path.name
         resource.file.relativePath = path.parent.name
-
-        from .utils import get_hash
-
-        resource.file.hash.sha1 = get_hash(path, "sha1")
-        resource.file.hash.sha256 = get_hash(path, "sha256")
-        resource.file.hash.sha512 = get_hash(path, "sha512")
-        resource.file.hash.murmur2 = get_hash(path, "murmur2")
 
         futures = (
             self._get_curseforge(meta, resource),
@@ -91,6 +99,7 @@ class ResourceAPI(object):
 
             addon_info = await response.json()
             resource.name = addon_info['data']['name']
+            if not addon_info['data']['allowModDistribution']: return
 
             resource.providers['CurseForge'] = Resource.Provider(
                 ID     = version_info['id'],
