@@ -188,7 +188,7 @@ class ResourceAPI(object):
                 break
             else: return
 
-            resource.providers['Github'] = Resource.Provider(
+            resource.providers['Other'] = Resource.Provider(
                 ID     = None,
                 fileID = None,
                 url    = url,

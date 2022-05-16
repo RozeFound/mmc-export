@@ -62,7 +62,7 @@ class packwiz(Writer):
                             "hash": resource.file.hash.sha512
                         }
 
-                case "Github", provider: 
+                case "Other", provider: 
 
                     slug = provider.slug
 

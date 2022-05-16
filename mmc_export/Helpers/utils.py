@@ -1,5 +1,7 @@
 from tomli import loads as parse_toml
+from urllib.parse import urlparse
 from ctypes import ArgumentError
+from pprint import pformat
 from pathlib import Path
 
 from .structures import Intermediate, Resource
@@ -27,6 +29,8 @@ def get_hash(path: Path, type: str = "sha256") -> str:
     return str(hash)
 
 def read_config(cfg_path: Path, modpack_info: Intermediate):
+
+    allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
  
     lost_resources = [res for res in modpack_info.resources if not res.providers]
 
@@ -45,13 +49,17 @@ def read_config(cfg_path: Path, modpack_info: Intermediate):
                         for cfg_resource in resources:
                             if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
 
-                                resource.name = cfg_resource['name']
-                                resource.file.name = cfg_resource['filename']
+                                url = cfg_resource['url']
 
-                                resource.providers['Github'] = Resource.Provider(
+                                if urlparse(url).netloc not in allowed_domains:
+                                    print(f"Failed to read config for {resource.name}, wrong url domain!")
+                                    print(f"Allowed domains: {pformat(allowed_domains)}")
+                                    continue
+
+                                resource.providers['Other'] = Resource.Provider(
                                     ID     = None,
                                     fileID = None,
-                                    url    = cfg_resource['url'],
+                                    url    = url,
                                     slug   = None,
                                     author = None)
 

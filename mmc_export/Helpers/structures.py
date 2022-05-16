@@ -47,7 +47,7 @@ class Resource:
         author: str = None
         
     file: File = field(default_factory=File)
-    providers: dict[Literal['Modrinth', 'CurseForge', 'Github'], Provider] = field(default_factory=dict)
+    providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
 
 @dataclass
 class Intermediate:
