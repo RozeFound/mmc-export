@@ -17,7 +17,8 @@ class Modrinth(Writer):
         data = {
             "path": relative_path.as_posix(),
             "hashes": resource.file.hash.as_dict(),
-            "downloads": [provider.url for _, provider in resource.providers.items()]
+            "downloads": [provider.url for _, provider in resource.providers.items()],
+            "fileSize": resource.file.path.stat().st_size
         }
 
         self.index['files'].append(data)
