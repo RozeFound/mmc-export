@@ -49,7 +49,7 @@ mmc-export -i modpack.zip -c config.toml -f curseforge modrinth -o converted_mod
 
 Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive)
 
-`Intermediate` must be used only for debugging, can contain sensetive information like user name.
+`Intermediate` must be used for debugging only, as it may contain sensitive information like username.
 
 # How to Install / Update
 ```
