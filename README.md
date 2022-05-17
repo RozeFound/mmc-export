@@ -17,7 +17,7 @@ Since MultiMC export features are very limited, I created a script that solves t
 ---
 ### Github rate limits
 
-Github have limited requests per hour to 60, this means that if you have more than 60 mods, the rest will be excluded from github search.
+Github has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search.
 
 To solve this, you can authorize in application. \
 You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, example:
@@ -47,9 +47,9 @@ mmc-export -i modpack.zip -c config.toml -f curseforge modrinth -o converted_mod
 -o --output: specifies output directory, where converted zip files will be stored. By default current working directory will be used.
 ```
 
-Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case sensetive)
+Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive)
 
-`intermediate` must be used only for debuging, can contain sensetive information like user name.
+`Intermediate` must be used only for debugging, can contain sensetive information like user name.
 
 # How to Install / Update
 ```
