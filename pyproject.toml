@@ -1,12 +1,11 @@
 [tool.poetry]
 name = "mmc-export"
 version = "2.1.5"
-description = ""
-authors = ["RozeFound"]
+description = "Export MMC modpack to other modpack formats"
+authors = ["RozeFound <hidden>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/RozeFound/mmc-export"
-homepage = "https://github.com/RozeFound/mmc-export"
 
 keywords = [
     "minecraft",
