@@ -1,6 +1,6 @@
 # MultiMC advanced exporter
 
-Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz)
+Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz). MultiMC forks which didn't changed export format much also supported, PolyMC support approved.
 
 # Features
 
@@ -20,31 +20,33 @@ Since MultiMC export features are very limited, I created a script that solves t
 Github has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search.
 
 To solve this, you can authorize in application. \
-You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, example:
+You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, like:
 ```
 mmc-export -i modpack -f format --github-auth username:token
 ```
 I recommend you to store tokens in enviroment variables for security reasons.
 
 # How to Use
-
 ```
-mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT]
+mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpacks
 ```
-
-Example: 
+## Syntax:
 ```
-mmc-export -i modpack.zip -c config.toml -f curseforge modrinth -o converted_modpacks
+mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB_AUTH] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
 ```
 
-## Explanation:
+### Explanation:
 
 ```
 -h --help: prints help
--i --input: specifies input file (mostly zip file)
--c --config: specifies config file, used for fill the gaps like description or files not in modrinth on curseforge example can be found in this repository.
--f --format: soecifies formats to convert, must be separated by spaces.
--o --output: specifies output directory, where converted zip files will be stored. By default current working directory will be used.
+-i --input: path to modpack, must be zip file exported from MultiMC.
+-c --config: path to config, used to fill the gaps like description or losted mods.
+-f --format: output formats, must be separated by spaces.
+-o --output: directory where converted zip files will be stored.
+--github-auth: Github Auth in format username:token
+--modrinth-search: modrinth search accuracy (exact (default), accurate, loose)
+--exclude-providers: providers you wish to exclude from search (cf, mr, gh)
+--exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
 
 Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive)
