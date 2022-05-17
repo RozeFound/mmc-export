@@ -13,6 +13,7 @@ class ResourceAPI(object):
 
     modrinth_search_type: str
     excluded_providers: list[str]
+    ignore_CF_flag: bool
 
     def __init__(self, session: ClientSession, modpack_info: Intermediate) -> None:
 
@@ -99,7 +100,7 @@ class ResourceAPI(object):
 
             addon_info = await response.json()
             resource.name = addon_info['data']['name']
-            if not addon_info['data']['allowModDistribution']: return
+            if not self.ignore_CF_flag and not addon_info['data']['allowModDistribution']: return
 
             resource.providers['CurseForge'] = Resource.Provider(
                 ID     = version_info['id'],

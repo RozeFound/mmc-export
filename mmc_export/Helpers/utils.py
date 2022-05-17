@@ -16,15 +16,12 @@ def get_hash(path: Path, type: str = "sha256") -> str:
         data = file.read()
 
     match(type):
-
         case "sha1": hash = sha1(data).hexdigest()
         case "sha256": hash = sha256(data).hexdigest()
         case "sha512": hash = sha512(data).hexdigest()
         case "xxhash": hash = xxh3_64_hexdigest(data)
-        case "murmur2": 
-            data = bytes([b for b in data if b not in (9, 10, 13, 32)])
-            hash = murmur2(data, seed=1)
-        case _: raise(ArgumentError("Incorrect hash type!"))
+        case "murmur2": hash = murmur2(bytes([b for b in data if b not in (9, 10, 13, 32)]), seed=1)
+        case _: raise ArgumentError("Incorrect hash type!")
 
     return str(hash)
 
