@@ -30,6 +30,7 @@ I recommend you to store tokens in enviroment variables for security reasons.
 ```
 mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpacks
 ```
+It's recommended to fill config at least with basic info like name and version, some launchers can fail import if these values are empty.
 ## Syntax:
 ```
 mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB_AUTH] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
