@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.1.5"
+version = "2.1.6"
 description = "Export MMC modpack to other modpack formats"
-authors = ["RozeFound <hidden>"]
+authors = ["RozeFound"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/RozeFound/mmc-export"

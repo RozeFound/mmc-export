@@ -4,6 +4,7 @@ from aiohttp_client_cache.backends import FileBackend
 from aiohttp import TCPConnector, BasicAuth
 from importlib import import_module
 from pathlib import Path
+import os
 
 from jsonpickle import encode as encode_json
 
@@ -57,7 +58,8 @@ async def run():
                     file.write(encode_json(intermediate, indent=4, unpicklable=False))
                 continue
 
-            module = import_module(f".Formats.{format.lower()}", "mmc-export")
+            project = "mmc-export" if os.environ['DEBUG'] != "TRUE" else "mmc_export"
+            module = import_module(f".Formats.{format.lower()}", project)
             Writer = getattr(module, format)
 
             writer = Writer(args.output, intermediate)
