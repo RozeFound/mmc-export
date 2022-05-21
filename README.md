@@ -1,7 +1,7 @@
 # MultiMC advanced exporter
 ![PyPI pyversions](https://img.shields.io/pypi/pyversions/mmc-export)
 [![PyPI version](https://img.shields.io/pypi/v/mmc-export?label=mmc-export&color=%2347a637)](https://pypi.org/project/mmc-export)
-[![PyPI downloads](https://img.shields.io/pypi/dm/mmc-export?color=%23894bbf)](#how-to-install--update)
+[![PyPI downloads](https://img.shields.io/pypi/dm/mmc-export?color=%23894bbf)](https://pypi.org/project/mmc-export)
 [![GitHub license](https://img.shields.io/github/license/RozeFound/mmc-export)](/LICENSE)
 
 Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz). MultiMC forks which didn't changed export format much also supported, PolyMC support approved.
