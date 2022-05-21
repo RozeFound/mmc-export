@@ -58,7 +58,7 @@ async def run():
                     file.write(encode_json(intermediate, indent=4, unpicklable=False))
                 continue
 
-            project = "mmc-export" if os.environ['DEBUG'] != "TRUE" else "mmc_export"
+            project = "mmc-export" if os.getenv('DEBUG', 'FALSE') != "TRUE" else "mmc_export"
             module = import_module(f".Formats.{format.lower()}", project)
             Writer = getattr(module, format)
 
