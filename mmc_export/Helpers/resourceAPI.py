@@ -1,5 +1,6 @@
 import pickle
 import asyncio
+import queue
 import tenacity as tn
 from pathlib import Path
 from zipfile import ZipFile
@@ -41,6 +42,19 @@ class ResourceAPI(object):
     
     async def get(self, path: Path) -> Resource:
 
+        meta, resource = self._get_raw_info(path)
+
+        futures = (
+            self._get_curseforge(meta, resource),
+            self._get_modrinth(meta, resource),
+            self._get_github(meta, resource)
+        )
+
+        await asyncio.gather(*futures)
+        return resource
+
+    def _get_raw_info(self, path: Path) -> tuple[dict, Resource]:
+
         cache_file = self.cache_directory / get_hash(path, "xxhash")
         if cache_file.exists():
             data = cache_file.read_bytes()
@@ -75,14 +89,7 @@ class ResourceAPI(object):
         resource.file.name = path.name
         resource.file.relativePath = path.parent.name
 
-        futures = (
-            self._get_curseforge(meta, resource),
-            self._get_modrinth(meta, resource),
-            self._get_github(meta, resource)
-        )
-
-        await asyncio.gather(*futures)
-        return resource
+        return meta, resource
     
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
@@ -195,3 +202,34 @@ class ResourceAPI(object):
                 url    = url,
                 slug   = meta['id'],
                 author = author)
+
+
+class ResourceAPI_Batched(ResourceAPI):
+
+    def __init__(self, session: ClientSession, modpack_info: Intermediate) -> None:
+
+        self.queue: list[tuple[dict, Resource]] = list()
+
+        super().__init__(session, modpack_info)
+
+    def queue_resource(self, path: Path):
+
+        meta, resource = self._get_raw_info(path)
+        self.queue.append((meta, resource))
+
+    async def _get_modrinth(self) -> None:
+
+        payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
+        async with self.session.post(f"{self.modrinth}/version_files", json=payload) as response:
+            if response.status != 200 and response.status != 504 and response.status != 423: return
+            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}
+
+            for meta, resource in self.queue:
+                if version_info := versions.get(resource.file.hash.sha1):
+
+                    resource.providers['Modrinth'] = Resource.Provider(
+                    ID     = version_info['project_id'],
+                    fileID = version_info['id'],
+                    url    = version_info['files'][0]['url'],
+                    slug   = meta['id'],
+                    author = None)
