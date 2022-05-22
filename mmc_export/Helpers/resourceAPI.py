@@ -1,6 +1,5 @@
 import pickle
 import asyncio
-import queue
 import tenacity as tn
 from pathlib import Path
 from zipfile import ZipFile
