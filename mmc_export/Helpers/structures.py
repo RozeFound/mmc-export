@@ -1,4 +1,3 @@
-from math import fabs
 from pathlib import Path
 from typing import Literal
 from dataclasses import dataclass, field
@@ -16,18 +15,11 @@ class File:
         sha512: str = None
         murmur2: int = None
 
-        def as_dict(self):  
-            return {
-                "sha1": self.sha1,
-                "sha256": self.sha256,
-                "sha512": self.sha512,
-                "murmur2": self.murmur2
-            }
-
     hash: Hash = field(default_factory=Hash)
 
     path: Path = None
     relativePath: str = None
+
 
 @dataclass
 class Resource:
@@ -48,6 +40,7 @@ class Resource:
         
     file: File = field(default_factory=File)
     providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
+
 
 @dataclass
 class Intermediate:
@@ -81,6 +74,7 @@ class Format(ABC):
 
     def __del__(self) -> None:
         self._temp_dir.cleanup()
+
 
 class Writer(Format):
 
