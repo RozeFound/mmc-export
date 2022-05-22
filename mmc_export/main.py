@@ -14,7 +14,7 @@ from .Helpers.resourceAPI import ResourceAPI
 async def run():
 
     formats = ('packwiz', 'Modrinth', 'CurseForge', 'Intermediate')
-    providers = ('cf', 'mr', 'gh')
+    providers = ('Github', 'CurseForge', 'Modrinth')
 
     modrinth_search_help = """How accurate modrith search will be:\n
                               exact - uses hash to find file (default)\n

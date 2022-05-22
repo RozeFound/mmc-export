@@ -50,11 +50,12 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 -o --output: directory where converted zip files will be stored.
 --github-auth: Github Auth in format username:token
 --modrinth-search: modrinth search accuracy (exact (default), accurate, loose)
---exclude-providers: providers you wish to exclude from search (cf, mr, gh)
+--exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
 
-Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive)
+Avaliable formats: - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive) \
+Avaliable providers: - `Github, CurseForge, Modrinth` (case-sensitive)
 
 `Intermediate` must be used for debugging only, as it may contain sensitive information like username.
 

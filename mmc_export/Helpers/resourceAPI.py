@@ -87,7 +87,7 @@ class ResourceAPI(object):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
 
-        if "cf" in self.excluded_providers: return
+        if "CurseForge" in self.excluded_providers: return
 
         async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
             json = await response.json()
@@ -144,7 +144,7 @@ class ResourceAPI(object):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
-        if "mr" in self.excluded_providers: return
+        if "Modrinth" in self.excluded_providers: return
 
         async with self.session.get(f"{self.modrinth}/version_file/{resource.file.hash.sha1}") as response: 
             if response.status != 200 and response.status != 504 and response.status != 423: 
@@ -166,7 +166,7 @@ class ResourceAPI(object):
 
         from urllib.parse import urlparse
 
-        if "contact" not in meta or "gh" in self.excluded_providers: return
+        if "contact" not in meta or "Github" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
 
