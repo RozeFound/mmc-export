@@ -63,10 +63,11 @@ class ResourceAPI(object):
                     
 
             resource = Resource(meta['name'])
-            resource.file.hash.sha1 = get_hash(path, "sha1")
-            resource.file.hash.sha256 = get_hash(path, "sha256")
-            resource.file.hash.sha512 = get_hash(path, "sha512")
-            resource.file.hash.murmur2 = get_hash(path, "murmur2")
+            file_data = path.read_bytes()
+            resource.file.hash.sha1 = get_hash(file_data, "sha1")
+            resource.file.hash.sha256 = get_hash(file_data, "sha256")
+            resource.file.hash.sha512 = get_hash(file_data, "sha512")
+            resource.file.hash.murmur2 = get_hash(file_data, "murmur2")
 
             data = pickle.dumps((meta, resource))
             cache_file.write_bytes(data)

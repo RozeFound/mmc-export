@@ -1,3 +1,4 @@
+from io import BytesIO
 from tomli import loads as parse_toml
 from urllib.parse import urlparse
 from ctypes import ArgumentError
@@ -6,16 +7,20 @@ from pathlib import Path
 
 from .structures import Intermediate, Resource
 
-def get_hash(path: Path, type: str = "sha256") -> str:
+def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
+
+    if type(file) == Path:
+        with open(file, "rb") as file:
+            data = file.read()
+    elif type(file) == BytesIO: data = file.read()
+    elif type(file) == bytes: data = file
+    else: raise TypeError("")
         
     from xxhash import xxh3_64_hexdigest
     from hashlib import sha1, sha256, sha512
     from murmurhash2 import murmurhash2 as murmur2
 
-    with open(path, "rb") as file:
-        data = file.read()
-
-    match(type):
+    match hash_type:
         case "sha1": hash = sha1(data).hexdigest()
         case "sha256": hash = sha256(data).hexdigest()
         case "sha512": hash = sha512(data).hexdigest()
