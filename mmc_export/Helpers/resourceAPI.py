@@ -116,38 +116,6 @@ class ResourceAPI(object):
                 author = addon_info['data']['authors'][0]['name'])
 
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
-    async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
-
-        if self.modrinth_search_type == "loose":      
-            async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
-                if response.status != 200 and response.status != 504 and response.status != 423: return
-                json = await response.json()
-                if hits := json['hits']: addon_id = hits[0]['project_id']
-                else: return
-        elif self.modrinth_search_type == "accurate": addon_id = meta['id']
-        else: return
-
-        url = f'{self.modrinth}/project/{addon_id}/version?loaders=["{self.modpack_info.modloader.type}"]&game_versions=["{self.modpack_info.minecraft_version}"]'
-
-        async with self.session.get(url) as response:
-            if response.status != 200 and response.status != 504 and response.status != 423: return
-
-            versions_info = await response.json()
-
-            for version_info in versions_info:
-
-                if meta['version'] in version_info['version_number']:
-
-                    resource.providers['Modrinth'] = Resource.Provider(
-                        ID     = addon_id,
-                        fileID = version_info['id'],
-                        url    = version_info['files'][0]['url'],
-                        slug   = meta['id'],
-                        author = None)
-
-                    return
-
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
         if "mr" in self.excluded_providers: return
@@ -166,6 +134,39 @@ class ResourceAPI(object):
                     url    = version_info['files'][0]['url'],
                     slug   = meta['id'],
                     author = None)         
+
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
+    async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
+
+        if self.modrinth_search_type == "loose":      
+            async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
+                if response.status != 200 and response.status != 504 and response.status != 423: return
+                json = await response.json()
+                if hits := json['hits']: addon_id = hits[0]['project_id']
+                else: return
+        elif self.modrinth_search_type == "accurate": addon_id = meta['id']
+        else: return
+
+        placeholder = f'{self.modrinth}/project/{addon_id}/version?loaders=["{{}}"]&game_versions=["{{}}"]'
+        url = placeholder.format(self.modpack_info.modloader.type, self.modpack_info.minecraft_version)
+
+        async with self.session.get(url) as response:
+            if response.status != 200 and response.status != 504 and response.status != 423: return
+
+            versions_info = await response.json()
+
+            for version_info in versions_info:
+
+                if meta['version'] in version_info['version_number']:
+
+                    resource.providers['Modrinth'] = Resource.Provider(
+                        ID     = addon_id,
+                        fileID = version_info['id'],
+                        url    = version_info['files'][0]['url'],
+                        slug   = meta['id'],
+                        author = None)
+
+                    return
 
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self, meta: dict, resource: Resource) -> None:
@@ -218,10 +219,12 @@ class ResourceAPI_Batched(ResourceAPI):
 
     async def _get_modrinth(self) -> None:
 
+        search_queue: list[tuple[dict, Resource]] = list()
+
         payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
         async with self.session.post(f"{self.modrinth}/version_files", json=payload) as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}
+            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}    
 
             for meta, resource in self.queue:
                 if version_info := versions.get(resource.file.hash.sha1):
@@ -232,3 +235,47 @@ class ResourceAPI_Batched(ResourceAPI):
                     url    = version_info['files'][0]['url'],
                     slug   = meta['id'],
                     author = None)
+                else: search_queue.append((meta, resource))
+
+        if self.modrinth_search_type != "exact": await self._get_modrinth_loose(search_queue)
+
+    async def _get_modrinth_loose(self, search_queue: list[tuple[dict, Resource]]) -> None:
+
+        version_ids: list[str] = list()
+
+        async def get_project_id(meta: dict, resource: Resource) -> str:
+            if self.modrinth_search_type == "loose":      
+                async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
+                    if response.status != 200 and response.status != 504 and response.status != 423: return
+                    if hits := (await response.json())['hits']: return hits[0]['project_id']
+            else: return meta['id']
+
+        futures = (get_project_id(meta, resource) for meta, resource in search_queue)
+        project_ids = await asyncio.gather(*futures)
+        if not project_ids: return
+
+        l2s = lambda l: "[{}]".format(",".join(map('"{}"'.format, l))) # list to string convesion
+        async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids)}") as response:
+            if response.status != 200 and response.status != 504 and response.status != 423: return
+            for project in await response.json(): version_ids.append(project['versions'])
+
+        if not version_ids: return
+
+        async with self.session.get(f"{self.modrinth}/versions?ids={l2s(version_ids)}") as response:
+            if response.status != 200 and response.status != 504 and response.status != 423: return
+            versions = await response.json()
+            for meta, resource in search_queue:
+                for version_info in versions:
+
+                    if meta['version'] in version_info['version_number'] \
+                        and self.modpack_info.minecraft_version in version_info['game_versions'] \
+                        and self.modpack_info.modloader.type in version_info['loaders']:
+
+                        resource.providers['Modrinth'] = Resource.Provider(
+                            ID     = version_info['project_id'],
+                            fileID = version_info['id'],
+                            url    = version_info['files'][0]['url'],
+                            slug   = meta['id'],
+                            author = None)
+
+                        break
