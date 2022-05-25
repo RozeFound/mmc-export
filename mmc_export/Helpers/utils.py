@@ -9,12 +9,12 @@ from .structures import Intermediate, Resource
 
 def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
 
-    if type(file) == Path:
+    if isinstance(file, Path):
         with open(file, "rb") as file:
             data = file.read()
-    elif type(file) == BytesIO: data = file.read()
-    elif type(file) == bytes: data = file
-    else: raise TypeError("")
+    elif isinstance(file, BytesIO): data = file.read()
+    elif isinstance(file, bytes): data = file
+    else: raise ArgumentError("Incorrect file type!")
         
     from xxhash import xxh3_64_hexdigest
     from hashlib import sha1, sha256, sha512
