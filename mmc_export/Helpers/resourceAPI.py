@@ -217,6 +217,7 @@ class ResourceAPI_Batched(ResourceAPI):
         meta, resource = self._get_raw_info(path)
         self.queue.append((meta, resource))
 
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_modrinth(self) -> None:
 
         search_queue: list[tuple[dict, Resource]] = list()
@@ -224,7 +225,7 @@ class ResourceAPI_Batched(ResourceAPI):
         payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
         async with self.session.post(f"{self.modrinth}/version_files", json=payload) as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}    
+            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}
 
             for meta, resource in self.queue:
                 if version_info := versions.get(resource.file.hash.sha1):
@@ -239,10 +240,12 @@ class ResourceAPI_Batched(ResourceAPI):
 
         if self.modrinth_search_type != "exact": await self._get_modrinth_loose(search_queue)
 
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_modrinth_loose(self, search_queue: list[tuple[dict, Resource]]) -> None:
 
         version_ids: list[str] = list()
-
+        
+        @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
         async def get_project_id(meta: dict, resource: Resource) -> str:
             if self.modrinth_search_type == "loose":      
                 async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
