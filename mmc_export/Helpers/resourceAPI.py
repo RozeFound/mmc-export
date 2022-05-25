@@ -167,7 +167,7 @@ class ResourceAPI(object):
 
         from urllib.parse import urlparse
 
-        if "contact" not in meta or "Github" in self.excluded_providers: return
+        if "contact" not in meta or "GitHub" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
 
