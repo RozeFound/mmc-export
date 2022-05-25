@@ -70,6 +70,19 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 - `accurate`- by hash or slug
 - `loose` - by hash or long name
 
+The example for the optional `--config` file [can be found here](example_config.toml). 
+
+For example, it can help in cases where the script says
+> No config entry found for resource: ModName
+Then you should add an entry to the end of the config like so:
+
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+url = "https://cdn.modrinth.com/data/abcdefg/versions/1.0.0/the_name_of_the.jar"
+```
+
 # How to Install / Update
 ```
 pip install -U mmc-export
