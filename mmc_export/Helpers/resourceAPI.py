@@ -1,9 +1,12 @@
 import pickle
 import asyncio
+import re
 import tenacity as tn
 from pathlib import Path
 from zipfile import ZipFile
+from urllib.parse import urlparse
 from aiohttp import ClientSession
+from collections import namedtuple
 from json import loads as parse_json
 
 from .utils import get_hash
@@ -171,8 +174,6 @@ class ResourceAPI(object):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self, meta: dict, resource: Resource) -> None:
 
-        from urllib.parse import urlparse
-
         if "contact" not in meta or "gh" in self.excluded_providers: return
         for link in meta['contact'].values():
             parsed_link = urlparse(link)
@@ -212,7 +213,7 @@ class ResourceAPI_Batched(ResourceAPI):
 
         super().__init__(session, modpack_info)
 
-    def queue_resource(self, path: Path):
+    def queue_resource(self, path: Path) -> None:
 
         meta, resource = self._get_raw_info(path)
         self.queue.append((meta, resource))
@@ -314,3 +315,60 @@ class ResourceAPI_Batched(ResourceAPI):
                             author = None)
 
                         break
+
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_github(self) -> None:
+
+        Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
+        repositories: list[Repository] = list()
+
+        for meta, _ in self.queue:
+            if "contact" not in meta: continue
+            for link in meta['contact'].values():
+                parsed_link = urlparse(link)
+
+                if parsed_link.netloc == "github.com":
+                    alias = re.sub('[\W_]+', '', meta['id'])
+                    owner, name = parsed_link.path[1:].split('/')[:2]
+                    repo = Repository(name.removesuffix(".git"), owner, alias)
+                    repositories.append(repo)
+                    break
+            else: continue
+
+        from gql_query_builder import GqlQuery
+        queries: list[str] = list()
+        
+        for repo in repositories:
+            query = GqlQuery() \
+                .fields(['...repoReleaseAssets']) \
+                .query('repository', alias=repo.alias, input={"name": f'"{repo.name}"', "owner": f'"{repo.owner}"'}) \
+                .generate()
+            queries.append(query)
+
+            payload = """
+            fragment repoReleaseAssets on Repository {
+                releases(last: 1) { edges { node {
+                    releaseAssets(last: 1) { nodes {
+                        name
+                        downloadUrl
+            } } } } } } """ + GqlQuery().operation(queries=queries).generate()
+
+            async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
+
+                data = await response.json()               
+                for meta, resource in self.queue:
+                    alias = re.sub('[\W_]+', '', meta['id'])
+                    if not data[alias]: continue
+                    for release in data.get(alias, {}).get('releases', {}).get('edges', []):
+                        for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
+                            if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
+                        else: continue
+                        break
+                    else: continue
+
+                    resource.providers['Other'] = Resource.Provider(
+                        ID     = None,
+                        fileID = None,
+                        url    = url,
+                        slug   = meta['id'],
+                        author = None)
