@@ -218,6 +218,38 @@ class ResourceAPI_Batched(ResourceAPI):
         self.queue.append((meta, resource))
 
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_curseforge(self) -> None:
+
+        payload = {"fingerprints":[resource.file.hash.murmur2 for _, resource in self.queue]}
+        async with self.session.post(f"{self.curseforge}/fingerprints", json=payload) as response:
+            if response.status != 200 and response.status != 504: return
+            if matches := (await response.json())['data']['exactMatches']:
+                versions = {version['file']['fileFingerprint']: version for version in matches}
+            else: return
+
+        payload = {"modIds":[version['id'] for version in versions]}
+        async with self.session.post(f"{self.curseforge}/mods", json=payload) as response:
+            if response.status != 200 and response.status != 504: return
+            if addons_array := (await response.json())['data']:
+                addons = {addon['id']: addon for addon in addons_array}
+            else: return
+
+        for meta, resource in self.queue:
+            if version := versions.get(resource.file.hash.murmur2):
+                if addon := addons.get(version['id']):
+
+                    resource.name = addon['name']
+                    if not self.ignore_CF_flag and not addon['allowModDistribution']: continue
+
+                    resource.providers['CurseForge'] = Resource.Provider(
+                        ID     = addon['id'],
+                        fileID = version['file']['id'],
+                        url    = version['file']['downloadUrl'],
+                        slug   = addon['slug'] if 'slug' in addon else meta['id'],
+                        author = addon['authors'][0]['name'])
+
+
+    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_modrinth(self) -> None:
 
         search_queue: list[tuple[dict, Resource]] = list()
@@ -228,12 +260,12 @@ class ResourceAPI_Batched(ResourceAPI):
             versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}
 
             for meta, resource in self.queue:
-                if version_info := versions.get(resource.file.hash.sha1):
+                if version := versions.get(resource.file.hash.sha1):
 
                     resource.providers['Modrinth'] = Resource.Provider(
-                    ID     = version_info['project_id'],
-                    fileID = version_info['id'],
-                    url    = version_info['files'][0]['url'],
+                    ID     = version['project_id'],
+                    fileID = version['id'],
+                    url    = version['files'][0]['url'],
                     slug   = meta['id'],
                     author = None)
                 else: search_queue.append((meta, resource))
