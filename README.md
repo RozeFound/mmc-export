@@ -73,7 +73,9 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 The example for the optional `--config` file [can be found here](example_config.toml). 
 
 For example, it can help in cases where the script says
+
 > No config entry found for resource: ModName
+
 Then you should add an entry to the end of the config like so:
 
 ```
