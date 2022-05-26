@@ -347,8 +347,8 @@ class ResourceAPI_Batched(ResourceAPI):
 
             payload = """
             fragment repoReleaseAssets on Repository {
-                releases(last: 1) { edges { node {
-                    releaseAssets(last: 1) { nodes {
+                releases(last: 100) { edges { node {
+                    releaseAssets(last: 10) { nodes {
                         name
                         downloadUrl
             } } } } } } """ + GqlQuery().operation(queries=queries).generate()
