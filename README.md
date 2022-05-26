@@ -21,14 +21,9 @@ Since MultiMC export features are very limited, I created a script that solves t
 ---
 ### GitHub rate limits
 
-GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search.
+GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search. But, every launch you will be asked to authorize yourself with simple instructions to avoid the limit, once you authorize, it will store token in secure keyring and stop asking.
 
-To solve this, you can authorize in application. \
-You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, like:
-```
-mmc-export -i modpack -f format --github-auth username:token
-```
-I recommend you to store tokens in enviroment variables for security reasons.
+If you don't want to use github search by some reason, you can specify `--exclude-providers GitHub` as argument.
 
 # How to Use
 ```

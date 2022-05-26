@@ -1,4 +1,7 @@
+import asyncio
 from io import BytesIO
+import keyring as secret_store
+from aiohttp_client_cache import CachedSession
 from tomli import loads as parse_toml
 from urllib.parse import urlparse
 from ctypes import ArgumentError
@@ -29,6 +32,49 @@ def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
         case _: raise ArgumentError("Incorrect hash type!")
 
     return str(hash)
+
+def delete_github_token() -> None:
+    try: secret_store.delete_password("mmc-export", "github-token")
+    except secret_store.core.backend.errors.PasswordDeleteError: return
+
+async def get_github_token(session: CachedSession) -> str | None:
+
+    if token := secret_store.get_password("mmc-export", "github-token"):
+        return token
+
+    client_id = "8011f22f502b091464de"
+    url = "https://github.com/login/device/code"
+    session.headers['Accept'] = "application/json"
+
+    async with session.disabled():
+
+        async with session.post(url, params={"client_id": client_id}) as response:
+            data = await response.json()
+
+            device_code = data['device_code']
+            user_code = data['user_code']
+            verification_uri = data['verification_uri']
+            interval = data['interval']
+
+            print(f"Enter the code: {user_code}")
+            print(f"Here: {verification_uri}")
+
+            payload = {"client_id": client_id, "device_code": device_code, 
+                "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
+
+            while(True):
+                url = "https://github.com/login/oauth/access_token"
+                async with session.post(url, params=payload) as response:
+                    data = await response.json()
+
+                    match data.get('error'):
+                        case "authorization_pending": await asyncio.sleep(interval); continue
+                        case "expired_token": print("Confirmation time is expired"); return
+                        case "access_denied": print("Token request declined"); return
+
+                    if token := data.get('access_token'):
+                        secret_store.set_password("mmc-export", "github-token", token)
+                        return token
 
 def read_config(cfg_path: Path, modpack_info: Intermediate):
 

@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 from collections import namedtuple
 from json import loads as parse_json
 
-from .utils import get_hash
+from .utils import delete_github_token, get_hash, get_github_token
 from .structures import Intermediate, Resource
 
 class ResourceAPI(object):
@@ -335,6 +335,14 @@ class ResourceAPI_Batched(ResourceAPI):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self) -> None:
 
+        if not self.session.headers.get('Authorization'):
+            if token := await get_github_token(self.session):
+                self.session.headers['Authorization'] = f"Bearer {token}"
+            else: 
+                futures = [super()._get_github(meta, resource) for meta, resource in self.queue]
+                await asyncio.gather(*futures)
+                return
+
         if "GitHub" in self.excluded_providers: return
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
@@ -371,6 +379,7 @@ class ResourceAPI_Batched(ResourceAPI):
         } } } } } } """ + GqlQuery().operation(queries=queries).generate()
 
         async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
+            if response.status == 401: delete_github_token()
             if response.status != 200 and response.status != 504: return
             data = (await response.json())['data']      
 
