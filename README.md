@@ -1,7 +1,7 @@
 # MultiMC advanced exporter
 ![PyPI pyversions](https://img.shields.io/pypi/pyversions/mmc-export)
 [![PyPI version](https://img.shields.io/pypi/v/mmc-export?label=mmc-export&color=%2347a637)](https://pypi.org/project/mmc-export)
-[![PyPI downloads](https://img.shields.io/pypi/dm/mmc-export?color=%23894bbf)](https://pypi.org/project/mmc-export)
+[![PyPI downloads](https://img.shields.io/pypi/dm/mmc-export?color=%23894bbf)](https://pypistats.org/packages/mmc-export)
 [![GitHub license](https://img.shields.io/github/license/RozeFound/mmc-export)](/LICENSE)
 
 Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz). MultiMC forks which didn't changed export format much also supported, PolyMC support approved.
@@ -19,9 +19,9 @@ Since MultiMC export features are very limited, I created a script that solves t
 - Multiple output formats at once
 
 ---
-### Github rate limits
+### GitHub rate limits
 
-Github has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search.
+GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search.
 
 To solve this, you can authorize in application. \
 You need to create personal key [here](https://github.com/settings/tokens) (with no permissions), and pass it as argument to script along with your username, like:
@@ -48,15 +48,27 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 -c --config: path to config, used to fill the gaps like description or losted mods.
 -f --format: output formats, must be separated by spaces.
 -o --output: directory where converted zip files will be stored.
---github-auth: Github Auth in format username:token
---modrinth-search: modrinth search accuracy (exact (default), accurate, loose)
---exclude-providers: providers you wish to exclude from search (cf, mr, gh)
+--github-auth: GitHub Auth in format username:token
+--modrinth-search: modrinth search accuracy
+--exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
 
-Avaliable formats:     - `CurseForge, Modrinth, packwiz, Intermediate` (case-sensitive)
+`--format` options (case-sensitive): 
+- `CurseForge`
+- `Modrinth`
+- `packwiz`
+- `Intermediate` (only for debugging, may contain sensitive data like username)
 
-`Intermediate` must be used for debugging only, as it may contain sensitive information like username.
+`--exclude-providers` options (case-sensitive): 
+- `CurseForge`
+- `Modrinth`
+- `GitHub`
+
+`--modrinth-search` options:
+- `exact` - by hash (default)
+- `accurate`- by hash or slug
+- `loose` - by hash or long name
 
 # How to Install / Update
 ```

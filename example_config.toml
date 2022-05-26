@@ -1,14 +1,26 @@
-name = "My Beautiful Pack"
-author = "RozeFound"
-version = "0.0.6"
-description = "Cool pack, isn't it?"
+name = "My Beautiful Pack" # modpack name, recommended
+author = "RozeFound" # modpack author, recommended
+version = "0.0.6" # modpack version, required
+description = "Cool pack, isn't it?" # optional
+
+#Available url domains:
+#
+#    cdn.modrinth.com
+#    edge.forgecdn.net
+#    media.forgecdn.net
+#    github.com
+#    raw.githubusercontent.com
 
 [[Resource]]
+# resource name, for  fabric mods it's `name` field in fabric.mod.json
+# For forge mods, it's `description` in pack.mcmeta
 name = "BCLib"
-filename = "bclib-0.4.0.jar"
+filename = "bclib-0.4.0.jar" 
 url = "https://github.com/paulevsGitch/BCLib/releases/download/0.4.0/bclib-0.4.0.jar"
 
 [[Resource]]
+# For files it's filename without extension, but for convinience you can specify what you want here
+# Because to find the resource, it checks resource name OR filename, but specifying both is required
 name = "Complementary Shaders"
 filename = "ComplementaryShaders_v4.1.zip"
 url = "https://edge.forgecdn.net/files/3391/516/ComplementaryShaders_v4.1.zip"

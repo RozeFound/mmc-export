@@ -4,7 +4,6 @@ from aiohttp_client_cache.backends import FileBackend
 from aiohttp import TCPConnector, BasicAuth
 from importlib import import_module
 from pathlib import Path
-import os
 
 from jsonpickle import encode as encode_json
 
@@ -15,7 +14,7 @@ from .Helpers.resourceAPI import ResourceAPI
 async def run():
 
     formats = ('packwiz', 'Modrinth', 'CurseForge', 'Intermediate')
-    providers = ('cf', 'mr', 'gh')
+    providers = ('GitHub', 'CurseForge', 'Modrinth')
 
     modrinth_search_help = """How accurate modrith search will be:\n
                               exact - uses hash to find file (default)\n
@@ -27,7 +26,7 @@ async def run():
     arg_parser.add_argument('-i', '--input', dest='input', type=Path, help='Path to pack', required=True)
     arg_parser.add_argument('-f', '--format', dest='formats', type=str, nargs="+", choices=formats, help='Format to convert to', required=True)
     arg_parser.add_argument('-o', '--output', dest='output', type=Path, help='Specify output directory (optional)', default=Path.cwd())
-    arg_parser.add_argument('--github-auth', dest='github_auth', type=str, help='Github Auth in format username:token')
+    arg_parser.add_argument('--github-auth', dest='github_auth', type=str, help='GitHub Auth in format username:token')
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=('exact', 'accurate', 'loose'), help=modrinth_search_help, default='exact')
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, help='List of providers you which to exclude from search', default=str())
     arg_parser.add_argument('--exclude-forbidden', dest='ignore_CF_flag', action='store_false', help='Exclude mods which not allowed for distribution from CurseForge search (disabled by default)')
@@ -58,8 +57,7 @@ async def run():
                     file.write(encode_json(intermediate, indent=4, unpicklable=False))
                 continue
 
-            project = "mmc-export" if os.getenv('DEBUG', 'FALSE') != "TRUE" else "mmc_export"
-            module = import_module(f".Formats.{format.lower()}", project)
+            module = import_module(f".Formats.{format.lower()}", "mmc_export")
             Writer = getattr(module, format)
 
             writer = Writer(args.output, intermediate)
