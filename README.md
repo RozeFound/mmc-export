@@ -22,7 +22,7 @@ Since MultiMC export features are very limited, I created a script that solves t
 ### GitHub rate limits
 
 GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search. 
-If you authenticate by using `mmc-export gh-login`and follow the instructions, the limit will be removed and requests will be faster. You can always log out with `mmc-export gh-logout`.
+If you authenticate with GitHub using `mmc-export gh-login`, the limit will be removed and requests will be faster. You can always log out with `mmc-export gh-logout`.
 
 If you don't want to use github search by some reason, you can specify `--exclude-providers GitHub` as argument.
 
