@@ -83,6 +83,14 @@ Then you should add an entry to the end of the config like so:
 name = "ModName"
 filename = "the_name_of_the.jar" 
 url = "https://cdn.modrinth.com/data/abcdefg/versions/1.0.0/the_name_of_the.jar"
+action = "override"
+```
+or to just skip the file:
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+action = "remove"
 ```
 
 # How to Install / Update
