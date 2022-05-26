@@ -79,40 +79,53 @@ async def get_github_token(session: CachedSession) -> str | None:
 def read_config(cfg_path: Path, modpack_info: Intermediate):
 
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
- 
     lost_resources = [res for res in modpack_info.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
         config = parse_toml(cfg_path.read_text())
-        for cfg_tuple in config.items():
+    else: config = {}
 
-            match cfg_tuple:
+    modpack_info.name = config.get('name', modpack_info.name)
+    modpack_info.author = config.get('author', modpack_info.author)
+    modpack_info.version = config.get('version', modpack_info.version)
+    modpack_info.description = config.get('description', modpack_info.description)
+    if not modpack_info.version: modpack_info.version = input("Specify modpack version: ")
 
-                case 'name', name: modpack_info.name = name
-                case 'author', author: modpack_info.author = author
-                case 'version', version: modpack_info.version = version
-                case 'description', description: modpack_info.description = description
-                case 'Resource', resources: 
-                    for resource in lost_resources:
-                        for cfg_resource in resources:
-                            if resource.name == cfg_resource['name'] or resource.file.name == cfg_resource['filename']:
+    for resource_config in config.get('Resource', []):
 
-                                url = cfg_resource['url']
+        url = resource_config.get('url')
+        name = resource_config.get('name')
+        filename = resource_config.get('filename')
 
-                                if urlparse(url).netloc not in allowed_domains:
-                                    print(f"Failed to read config for {resource.name}, wrong url domain!")
-                                    print(f"Allowed domains: {pformat(allowed_domains)}")
-                                    continue
+        resource = next((x for x in lost_resources if name in x.name or filename in x.file.name), None)
+        if not resource: continue
 
-                                resource.providers['Other'] = Resource.Provider(
-                                    ID     = None,
-                                    fileID = None,
-                                    url    = url,
-                                    slug   = None,
-                                    author = None)
+        match resource_config.get("action"):
+            case "remove": 
+                modpack_info.resources.remove(resource)
+                lost_resources.remove(resource)
+                continue
+            case "override": 
+                modpack_info.overrides.append(resource.file)
+                modpack_info.resources.remove(resource)
+                lost_resources.remove(resource)
 
-                                lost_resources.remove(resource)
-                                break
+                continue
+
+        if not url: print(f"Failed to read config for {resource.name}, you must specify url!"); continue
+        if urlparse(url).netloc not in allowed_domains:
+            print(f"Failed to read config for {resource.name}, wrong url domain!")
+            print(f"Allowed domains: {pformat(allowed_domains)}")
+            continue
+
+        resource.providers['Other'] = Resource.Provider(
+            ID     = None,
+            fileID = None,
+            url    = url,
+            slug   = None,
+            author = None)
+
+        lost_resources.remove(resource)
 
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)

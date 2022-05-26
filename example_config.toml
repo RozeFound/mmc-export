@@ -1,6 +1,6 @@
 name = "My Beautiful Pack" # modpack name, recommended
 author = "RozeFound" # modpack author, recommended
-version = "0.0.6" # modpack version, required
+version = "0.0.7" # modpack version, required, will be prompted if not specified
 description = "Cool pack, isn't it?" # optional
 
 #Available url domains:
@@ -19,8 +19,21 @@ filename = "bclib-0.4.0.jar"
 url = "https://github.com/paulevsGitch/BCLib/releases/download/0.4.0/bclib-0.4.0.jar"
 
 [[Resource]]
-# For files it's filename without extension, but for convinience you can specify what you want here
-# Because to find the resource, it checks resource name OR filename, but specifying both is required
+# For other files it's filename without extension, but for convinience you can specify what you want here
+# Because to find the resource, it checks resource name OR filename
+# But specifying both, name and filename is highly recommended for propper indentifying
 name = "Complementary Shaders"
 filename = "ComplementaryShaders_v4.1.zip"
 url = "https://edge.forgecdn.net/files/3391/516/ComplementaryShaders_v4.1.zip"
+
+[[Resource]]
+name = "Mod Menu Helper"
+filename = "Mod Menu Helper.zip" 
+action = "override" # default behavior, moves resource to overrides. If specified directly supress the warning 
+# field action can contain "override" or "remove"
+# if field action is present, url is not required
+
+[[Resource]]
+name = "Farsight Mod"
+filename = "farsight.fabric-1.18-1.9.jar"
+action = "remove" # deletes resource from pack completely
