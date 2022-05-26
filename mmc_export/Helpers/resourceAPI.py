@@ -309,7 +309,7 @@ class ResourceAPI_Batched(ResourceAPI):
         l2s = lambda l: "[{}]".format(",".join(map('"{}"'.format, l))) # list to string convesion
         async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids)}") as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            for project in await response.json(): version_ids.append(project['versions'])
+            for project in await response.json(): version_ids.extend(project['versions'])
 
         if not version_ids: return
 
