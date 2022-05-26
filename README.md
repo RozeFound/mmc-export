@@ -21,7 +21,7 @@ Since MultiMC export features are very limited, I created a script that solves t
 ---
 ### GitHub rate limits
 
-GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search. But, every launch you will be asked to authorize yourself with simple instructions to avoid the limit, once you authorize, it will store token in secure keyring and stop asking.
+GitHub has limited requests per hour (up to 60), this means that if you have more than 60 mods, the rest will be excluded from github search. By authenticating with your GitHub account, you can remove the limit and enjoy faster requests (done in batch).
 
 If you don't want to use github search by some reason, you can specify `--exclude-providers GitHub` as argument.
 
