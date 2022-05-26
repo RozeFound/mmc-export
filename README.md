@@ -32,7 +32,7 @@ mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpac
 It's recommended to fill config at least with basic info like name and version, some launchers can fail import if these values are empty.
 ## Syntax:
 ```
-mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB_AUTH] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
 ```
 
 ### Explanation:
@@ -43,7 +43,6 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 -c --config: path to config, used to fill the gaps like description or losted mods.
 -f --format: output formats, must be separated by spaces.
 -o --output: directory where converted zip files will be stored.
---github-auth: GitHub Auth in format username:token
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
