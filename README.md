@@ -47,6 +47,7 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SE
 --exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
+All paths can be relative to current working directory or absolute.
 
 `--format` options (case-sensitive): 
 - `CurseForge`
