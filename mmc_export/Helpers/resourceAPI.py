@@ -335,6 +335,8 @@ class ResourceAPI_Batched(ResourceAPI):
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self) -> None:
 
+        if "GitHub" in self.excluded_providers: return
+        
         if not self.session.headers.get('Authorization'):
             if token := await get_github_token(self.session):
                 self.session.headers['Authorization'] = f"Bearer {token}"
@@ -343,7 +345,6 @@ class ResourceAPI_Batched(ResourceAPI):
                 await asyncio.gather(*futures)
                 return
 
-        if "GitHub" in self.excluded_providers: return
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
 
