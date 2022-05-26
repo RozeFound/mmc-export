@@ -300,7 +300,7 @@ class ResourceAPI_Batched(ResourceAPI):
                 async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
                     if response.status != 200 and response.status != 504 and response.status != 423: return
                     if hits := (await response.json())['hits']: return hits[0]['project_id']
-            else: return meta['id']
+            return meta['id']
 
         futures = (get_project_id(meta, resource) for meta, resource in search_queue)
         project_ids = await asyncio.gather(*futures)
