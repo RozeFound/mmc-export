@@ -63,7 +63,7 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 `--modrinth-search` options:
 - `exact` - by hash (default)
 - `accurate`- by hash or slug
-- `loose` - by hash or long name
+- `loose` - by hash, slug or long name
 
 # How to Install / Update
 ```
