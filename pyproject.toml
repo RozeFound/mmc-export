@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.1.7"
+version = "2.1.11"
 description = "Export MMC modpack to other modpack formats"
 authors = ["RozeFound"]
 license = "MIT"
@@ -29,7 +29,7 @@ tenacity = "^8.0.1"
 Werkzeug = "^2.1.2"
 jsonpickle = "^2.1.0"
 cryptography = "^37.0.2"
-aiohttp-client-cache = {extras = ["filesystem", "sqlite"], version = "^0.6.1"}
+aiohttp-client-cache = {extras = ["filesystem"], version = "^0.7.0"}
 xxhash = "^3.0.0"
 gql-query-builder = "^0.1.7"
 
