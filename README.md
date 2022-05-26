@@ -65,6 +65,36 @@ All paths can be relative to current working directory or absolute.
 - `accurate`- by hash or slug
 - `loose` - by hash, slug or long name
 
+The example for the optional `--config` file [can be found here](example_config.toml). 
+
+For example, if the script says
+
+> No config entry found for resource: ModName
+
+Then you should add **one** of the following entries to the end of the config:
+
+#### Specify source URL
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+url = "https://cdn.modrinth.com/data/abcdefg/versions/1.0.0/the_name_of_the.jar"
+```
+#### Hide the warning
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+action = "override"
+```
+#### Delete the file altogether
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+action = "remove"
+```
+
 # How to Install / Update
 ```
 pip install -U mmc-export
