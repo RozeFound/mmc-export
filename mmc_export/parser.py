@@ -5,7 +5,7 @@ from json import loads as parse_json
 from configparser import ConfigParser
 
 from .Helpers.structures import Intermediate, Format, File
-from .Helpers.resourceAPI import ResourceAPI
+from .Helpers.resourceAPI import ResourceAPI_Batched
 from .Helpers.utils import get_hash
 
 class Parser(Format):
@@ -13,7 +13,7 @@ class Parser(Format):
     def __init__(self, path: Path, session: ClientSession) -> None:
 
         self.intermediate = Intermediate()
-        self.resourceAPI = ResourceAPI(session, self.intermediate)
+        self.resourceAPI = ResourceAPI_Batched(session, self.intermediate)
 
         super().__init__(path)
 
@@ -45,11 +45,6 @@ class Parser(Format):
                     self.intermediate.modloader.type = "forge"
                     self.intermediate.modloader.version = version
 
-    async def get_resource(self, path: Path):
-
-        resource = await self.resourceAPI.get(path)
-        self.intermediate.resources.append(resource)
-
     def get_override(self, path: Path):
 
         if "minecraft" not in path.parts: return
@@ -72,16 +67,15 @@ class Parser(Format):
         unpack_archive(self.modpack_path, self.temp_dir)
         self.get_basic_info()
 
-        futures = list()
         overrides = list()
 
         for file in [file for file in self.temp_dir.glob("**/*") if file.is_file()]:
             if file.parent.name in downloadable_content and file.suffix != ".txt": 
-                future = self.get_resource(file)
-                futures.append(future)
+                self.resourceAPI.queue_resource(file)
             else: overrides.append(file)
 
-        await asyncio.gather(*futures)
+        self.intermediate.resources = await self.resourceAPI.gather()
+
         for override in overrides:
             self.get_override(override)
 

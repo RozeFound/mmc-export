@@ -9,7 +9,7 @@ from aiohttp import ClientSession
 from collections import namedtuple
 from json import loads as parse_json
 
-from .utils import get_hash
+from .utils import delete_github_token, get_hash, get_github_token
 from .structures import Intermediate, Resource
 
 class ResourceAPI(object):
@@ -220,17 +220,31 @@ class ResourceAPI_Batched(ResourceAPI):
         meta, resource = self._get_raw_info(path)
         self.queue.append((meta, resource))
 
+    async def gather(self) -> list[Resource]:
+
+        futures = (
+            self._get_curseforge(),
+            self._get_modrinth(),
+            self._get_github()
+        )
+
+        await asyncio.gather(*futures)
+        resources = [resource for _, resource in self.queue]
+        return resources
+
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_curseforge(self) -> None:
+
+        if "CurseForge" in self.excluded_providers: return
 
         payload = {"fingerprints":[resource.file.hash.murmur2 for _, resource in self.queue]}
         async with self.session.post(f"{self.curseforge}/fingerprints", json=payload) as response:
             if response.status != 200 and response.status != 504: return
             if matches := (await response.json())['data']['exactMatches']:
-                versions = {version['file']['fileFingerprint']: version for version in matches}
+                versions = {str(version['file']['fileFingerprint']): version for version in matches}
             else: return
 
-        payload = {"modIds":[version['id'] for version in versions]}
+        payload = {"modIds": [version['id'] for version in versions.values()]}
         async with self.session.post(f"{self.curseforge}/mods", json=payload) as response:
             if response.status != 200 and response.status != 504: return
             if addons_array := (await response.json())['data']:
@@ -251,10 +265,10 @@ class ResourceAPI_Batched(ResourceAPI):
                         slug   = addon['slug'] if 'slug' in addon else meta['id'],
                         author = addon['authors'][0]['name'])
 
-
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_modrinth(self) -> None:
 
+        if "Modrinth" in self.excluded_providers: return
         search_queue: list[tuple[dict, Resource]] = list()
 
         payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
@@ -295,7 +309,7 @@ class ResourceAPI_Batched(ResourceAPI):
         l2s = lambda l: "[{}]".format(",".join(map('"{}"'.format, l))) # list to string convesion
         async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids)}") as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            for project in await response.json(): version_ids.append(project['versions'])
+            for project in await response.json(): version_ids.extend(project['versions'])
 
         if not version_ids: return
 
@@ -320,6 +334,16 @@ class ResourceAPI_Batched(ResourceAPI):
 
     @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self) -> None:
+
+        if "GitHub" in self.excluded_providers: return
+        
+        if not self.session.headers.get('Authorization'):
+            if token := await get_github_token(self.session):
+                self.session.headers['Authorization'] = f"Bearer {token}"
+            else: 
+                futures = [super()._get_github(meta, resource) for meta, resource in self.queue]
+                await asyncio.gather(*futures)
+                return
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
@@ -347,30 +371,31 @@ class ResourceAPI_Batched(ResourceAPI):
                 .generate()
             queries.append(query)
 
-            payload = """
-            fragment repoReleaseAssets on Repository {
-                releases(last: 1) { edges { node {
-                    releaseAssets(last: 1) { nodes {
-                        name
-                        downloadUrl
-            } } } } } } """ + GqlQuery().operation(queries=queries).generate()
+        payload = """
+        fragment repoReleaseAssets on Repository {
+            releases(last: 100) { edges { node {
+                releaseAssets(last: 10) { nodes {
+                    name
+                    downloadUrl
+        } } } } } } """ + GqlQuery().operation(queries=queries).generate()
 
-            async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
+        async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
+            if response.status == 401: delete_github_token()
+            if response.status != 200 and response.status != 504: return
+            data = (await response.json())['data']      
 
-                data = await response.json()               
-                for meta, resource in self.queue:
-                    alias = re.sub('[\W_]+', '', meta['id'])
-                    if not data[alias]: continue
-                    for release in data.get(alias, {}).get('releases', {}).get('edges', []):
-                        for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
-                            if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
-                        else: continue
-                        break
+            for meta, resource in self.queue:
+                if not data.get(alias := re.sub('[\W_]+', '', meta['id']) if meta['id'] else "unknown"): continue
+                for release in data.get(alias, {}).get('releases', {}).get('edges', []):
+                    for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
+                        if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
                     else: continue
+                    break
+                else: continue
 
-                    resource.providers['Other'] = Resource.Provider(
-                        ID     = None,
-                        fileID = None,
-                        url    = url,
-                        slug   = meta['id'],
-                        author = None)
+                resource.providers['Other'] = Resource.Provider(
+                    ID     = None,
+                    fileID = None,
+                    url    = url,
+                    slug   = meta['id'],
+                    author = None)
