@@ -32,7 +32,7 @@ mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpac
 It's recommended to fill config at least with basic info like name and version, some launchers can fail import if these values are empty.
 ## Syntax:
 ```
-mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB_AUTH] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
 ```
 
 ### Explanation:
@@ -43,11 +43,11 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 -c --config: path to config, used to fill the gaps like description or losted mods.
 -f --format: output formats, must be separated by spaces.
 -o --output: directory where converted zip files will be stored.
---github-auth: GitHub Auth in format username:token
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
+All paths can be relative to current working directory or absolute.
 
 `--format` options (case-sensitive): 
 - `CurseForge`
@@ -64,6 +64,36 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--github-auth GITHUB
 - `exact` - by hash (default)
 - `accurate`- by hash or slug
 - `loose` - by hash, slug or long name
+
+The example for the optional `--config` file [can be found here](example_config.toml). 
+
+For example, if the script says
+
+> No config entry found for resource: ModName
+
+Then you should add **one** of the following entries to the end of the config:
+
+#### Specify source URL
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+url = "https://cdn.modrinth.com/data/abcdefg/versions/1.0.0/the_name_of_the.jar"
+```
+#### Hide the warning
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+action = "override"
+```
+#### Delete the file altogether
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
+action = "remove"
+```
 
 # How to Install / Update
 ```
