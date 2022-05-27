@@ -1,16 +1,17 @@
-import pickle
 import asyncio
-import re
-import tenacity as tn
-from pathlib import Path
-from zipfile import ZipFile
-from urllib.parse import urlparse
-from aiohttp import ClientSession
 from collections import namedtuple
 from json import loads as parse_json
+from pathlib import Path
+from re import compile as re_compile
+from urllib.parse import urlparse
+from zipfile import ZipFile
 
-from .utils import delete_github_token, get_hash, get_github_token
+import tenacity as tn
+from aiohttp_client_cache.session import CachedSession
+
 from .structures import Intermediate, Resource
+from .utils import delete_github_token, get_github_token, get_hash
+
 
 class ResourceAPI(object):
 
@@ -18,10 +19,10 @@ class ResourceAPI(object):
     excluded_providers: list[str]
     ignore_CF_flag: bool
 
-    def __init__(self, session: ClientSession, modpack_info: Intermediate) -> None:
+    def __init__(self, session: CachedSession, intermediate: Intermediate) -> None:
 
         self.session = session
-        self.modpack_info = modpack_info
+        self.intermediate = intermediate
 
         # Not secure but not plain text either, just a compromise.
 
@@ -57,10 +58,14 @@ class ResourceAPI(object):
 
     def _get_raw_info(self, path: Path) -> tuple[dict, Resource]:
 
+        from pickle import dumps as serialize
+        from pickle import loads as deserialize
+        from pickle import HIGHEST_PROTOCOL
+
         cache_file = self.cache_directory / get_hash(path, "xxhash")
         if cache_file.exists():
             data = cache_file.read_bytes()
-            meta, resource = pickle.loads(data)
+            meta, resource = deserialize(data)
         else:
             meta = {"name": path.stem,
                     "id": None,
@@ -85,7 +90,7 @@ class ResourceAPI(object):
             resource.file.hash.sha512 = get_hash(file_data, "sha512")
             resource.file.hash.murmur2 = get_hash(file_data, "murmur2")
 
-            data = pickle.dumps((meta, resource))
+            data = serialize((meta, resource), HIGHEST_PROTOCOL)
             cache_file.write_bytes(data)
 
         resource.file.path = path
@@ -94,7 +99,7 @@ class ResourceAPI(object):
 
         return meta, resource
     
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
 
         if "CurseForge" in self.excluded_providers: return
@@ -102,24 +107,24 @@ class ResourceAPI(object):
         async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
             json = await response.json()
             if matches := json['data']['exactMatches']:
-                version_info = matches[0]
+                version = matches[0]
             else: return
 
-        async with self.session.get(f"{self.curseforge}/mods/{version_info['id']}") as response:
+        async with self.session.get(f"{self.curseforge}/mods/{version['id']}") as response:
             if response.status != 200 and response.status != 504: return
 
-            addon_info = await response.json()
-            resource.name = addon_info['data']['name']
-            if not self.ignore_CF_flag and not addon_info['data']['allowModDistribution']: return
+            addon = await response.json()
+            resource.name = addon['data']['name']
+            if not self.ignore_CF_flag and not addon['data']['allowModDistribution']: return
 
             resource.providers['CurseForge'] = Resource.Provider(
-                ID     = version_info['id'],
-                fileID = version_info['file']['id'],
-                url    = version_info['file']['downloadUrl'],
-                slug   = addon_info['data']['slug'] if 'slug' in addon_info['data'] else meta['id'],
-                author = addon_info['data']['authors'][0]['name'])
+                ID     = version['id'],
+                fileID = version['file']['id'],
+                url    = version['file']['downloadUrl'],
+                slug   = addon['data']['slug'] if 'slug' in addon['data'] else meta['id'],
+                author = addon['data']['authors'][0]['name'])
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
 
         if "Modrinth" in self.excluded_providers: return
@@ -130,16 +135,15 @@ class ResourceAPI(object):
                     await self._get_modrinth_loose(meta, resource)
                 return
 
-            version_info = await response.json()
+            version = await response.json()
 
             resource.providers['Modrinth'] = Resource.Provider(
-                    ID     = version_info['project_id'],
-                    fileID = version_info['id'],
-                    url    = version_info['files'][0]['url'],
-                    slug   = meta['id'],
-                    author = None)       
+                    ID     = version['project_id'],
+                    fileID = version['id'],
+                    url    = version['files'][0]['url'],
+                    slug   = meta['id'])       
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
     async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
 
         if self.modrinth_search_type == "loose":      
@@ -152,27 +156,26 @@ class ResourceAPI(object):
         else: return
 
         placeholder = f'{self.modrinth}/project/{addon_id}/version?loaders=["{{}}"]&game_versions=["{{}}"]'
-        url = placeholder.format(self.modpack_info.modloader.type, self.modpack_info.minecraft_version)
+        url = placeholder.format(self.intermediate.modloader.type, self.intermediate.minecraft_version)
 
         async with self.session.get(url) as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
 
-            versions_info = await response.json()
+            versions = await response.json()
 
-            for version_info in versions_info:
+            for version in versions:
 
-                if meta['version'] in version_info['version_number']:
+                if meta['version'] in version['version_number']:
 
                     resource.providers['Modrinth'] = Resource.Provider(
                         ID     = addon_id,
-                        fileID = version_info['id'],
-                        url    = version_info['files'][0]['url'],
-                        slug   = meta['id'],
-                        author = None)
+                        fileID = version['id'],
+                        url    = version['files'][0]['url'],
+                        slug   = meta['id'])
 
                     return      
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self, meta: dict, resource: Resource) -> None:
 
         if "contact" not in meta or "GitHub" in self.excluded_providers: return
@@ -209,11 +212,11 @@ class ResourceAPI(object):
 
 class ResourceAPI_Batched(ResourceAPI):
 
-    def __init__(self, session: ClientSession, modpack_info: Intermediate) -> None:
+    def __init__(self, session: CachedSession, intermediate: Intermediate) -> None:
 
         self.queue: list[tuple[dict, Resource]] = list()
 
-        super().__init__(session, modpack_info)
+        super().__init__(session, intermediate)
 
     def queue_resource(self, path: Path) -> None:
 
@@ -223,17 +226,17 @@ class ResourceAPI_Batched(ResourceAPI):
     async def gather(self) -> list[Resource]:
 
         futures = (
-            self._get_curseforge(),
-            self._get_modrinth(),
-            self._get_github()
+            self._get_batched_curseforge(),
+            self._get_batched_modrinth(),
+            self._get_batched_github()
         )
 
         await asyncio.gather(*futures)
         resources = [resource for _, resource in self.queue]
         return resources
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
-    async def _get_curseforge(self) -> None:
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_batched_curseforge(self) -> None:
 
         if "CurseForge" in self.excluded_providers: return
 
@@ -265,8 +268,8 @@ class ResourceAPI_Batched(ResourceAPI):
                         slug   = addon['slug'] if 'slug' in addon else meta['id'],
                         author = addon['authors'][0]['name'])
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
-    async def _get_modrinth(self) -> None:
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_batched_modrinth(self) -> None:
 
         if "Modrinth" in self.excluded_providers: return
         search_queue: list[tuple[dict, Resource]] = list()
@@ -283,19 +286,18 @@ class ResourceAPI_Batched(ResourceAPI):
                     ID     = version['project_id'],
                     fileID = version['id'],
                     url    = version['files'][0]['url'],
-                    slug   = meta['id'],
-                    author = None)
+                    slug   = meta['id'])
                 else: search_queue.append((meta, resource))
 
-        if self.modrinth_search_type != "exact": await self._get_modrinth_loose(search_queue)
+        if self.modrinth_search_type != "exact": await self._get_batched_modrinth_loose(search_queue)
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
-    async def _get_modrinth_loose(self, search_queue: list[tuple[dict, Resource]]) -> None:
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_batched_modrinth_loose(self, search_queue: list[tuple[dict, Resource]]) -> None:
 
         version_ids: list[str] = list()
         
-        @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
-        async def get_project_id(meta: dict, resource: Resource) -> str:
+        @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
+        async def get_project_id(meta: dict, resource: Resource) -> str | None:
             if self.modrinth_search_type == "loose":      
                 async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
                     if response.status != 200 and response.status != 504 and response.status != 423: return
@@ -317,23 +319,22 @@ class ResourceAPI_Batched(ResourceAPI):
             if response.status != 200 and response.status != 504 and response.status != 423: return
             versions = await response.json()
             for meta, resource in search_queue:
-                for version_info in versions:
+                for version in versions:
 
-                    if meta['version'] in version_info['version_number'] \
-                        and self.modpack_info.minecraft_version in version_info['game_versions'] \
-                        and self.modpack_info.modloader.type in version_info['loaders']:
+                    if meta['version'] in version['version_number'] \
+                        and self.intermediate.minecraft_version in version['game_versions'] \
+                        and self.intermediate.modloader.type in version['loaders']:
 
                         resource.providers['Modrinth'] = Resource.Provider(
-                            ID     = version_info['project_id'],
-                            fileID = version_info['id'],
-                            url    = version_info['files'][0]['url'],
-                            slug   = meta['id'],
-                            author = None)
+                            ID     = version['project_id'],
+                            fileID = version['id'],
+                            url    = version['files'][0]['url'],
+                            slug   = meta['id'])
 
                         break
 
-    @tn.retry(stop=tn.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
-    async def _get_github(self) -> None:
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_batched_github(self) -> None:
 
         if "GitHub" in self.excluded_providers: return
         
@@ -347,6 +348,7 @@ class ResourceAPI_Batched(ResourceAPI):
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
+        pattern = re_compile(r"[\W_]+")
 
         for meta, _ in self.queue:
             if "contact" not in meta: continue
@@ -354,7 +356,7 @@ class ResourceAPI_Batched(ResourceAPI):
                 parsed_link = urlparse(link)
 
                 if parsed_link.netloc == "github.com":
-                    alias = re.sub('[\W_]+', '', meta['id'])
+                    alias = pattern.sub('', meta['id'])
                     owner, name = parsed_link.path[1:].split('/')[:2]
                     repo = Repository(name.removesuffix(".git"), owner, alias)
                     repositories.append(repo)
@@ -380,12 +382,12 @@ class ResourceAPI_Batched(ResourceAPI):
         } } } } } } """ + GqlQuery().operation(queries=queries).generate()
 
         async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
-            if response.status == 401: delete_github_token()
+            if response.status == 401: delete_github_token(); raise tn.TryAgain
             if response.status != 200 and response.status != 504: return
             data = (await response.json())['data']      
 
             for meta, resource in self.queue:
-                if not data.get(alias := re.sub('[\W_]+', '', meta['id']) if meta['id'] else "unknown"): continue
+                if not data.get(alias := pattern.sub('', meta['id']) if meta['id'] else "unknown"): continue
                 for release in data.get(alias, {}).get('releases', {}).get('edges', []):
                     for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
                         if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
@@ -397,5 +399,4 @@ class ResourceAPI_Batched(ResourceAPI):
                     ID     = None,
                     fileID = None,
                     url    = url,
-                    slug   = meta['id'],
-                    author = None)
+                    slug   = meta['id'])

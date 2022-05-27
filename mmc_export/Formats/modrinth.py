@@ -1,14 +1,15 @@
 from pathlib import Path
 
-from ..Helpers.structures import Writer, Intermediate, Resource, File
+from ..Helpers.structures import File, Intermediate, Resource, Writer
+
 
 class Modrinth(Writer):
 
-    def __init__(self, path: Path, modpack_info: Intermediate) -> None:
+    def __init__(self, path: Path, intermediate: Intermediate) -> None:
 
         self.index = dict()
 
-        super().__init__(path, modpack_info)
+        super().__init__(path, intermediate)
 
     def add_resource(self, resource: Resource) -> None:
         
@@ -36,31 +37,31 @@ class Modrinth(Writer):
 
     def write(self) -> None:
 
-        match self.modpack_info.modloader.type:
+        match self.intermediate.modloader.type:
             case "fabric": modloader = "fabric-loader"
             case "quilt": modloader = "quilt-loader"
-            case _: modloader = self.modpack_info.modloader.type
+            case _: modloader = self.intermediate.modloader.type
         
         self.index = {
             "formatVersion": 1,
             "game": "minecraft",
 
-            "versionId": self.modpack_info.version,
-            "name": self.modpack_info.name,
-            "summary": self.modpack_info.description,
+            "versionId": self.intermediate.version,
+            "name": self.intermediate.name,
+            "summary": self.intermediate.description,
 
             "files": [],
 
             "dependencies": {
-                "minecraft": self.modpack_info.minecraft_version,
-                modloader: self.modpack_info.modloader.version
+                "minecraft": self.intermediate.minecraft_version,
+                modloader: self.intermediate.modloader.version
             }
         }
 
-        for override in self.modpack_info.overrides:
+        for override in self.intermediate.overrides:
             self.add_override(override)
 
-        for resource in self.modpack_info.resources:
+        for resource in self.intermediate.resources:
             self.add_resource(resource)
 
         from json import dump as write_json
@@ -68,6 +69,6 @@ class Modrinth(Writer):
             write_json(self.index, file)
 
         from shutil import make_archive
-        base = self.modpack_path / ("MR_" + self.modpack_info.name)
-        archive = Path(make_archive(base, 'zip', self.temp_dir, '.'))
+        base = self.modpack_path / ("MR_" + self.intermediate.name)
+        archive = Path(make_archive(base.as_posix(), 'zip', self.temp_dir, '.'))
         archive.replace(archive.with_suffix(".mrpack"))

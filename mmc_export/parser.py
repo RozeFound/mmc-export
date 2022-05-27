@@ -1,16 +1,17 @@
-import asyncio
-from pathlib import Path
-from aiohttp import ClientSession
-from json import loads as parse_json
 from configparser import ConfigParser
+from json import loads as parse_json
+from pathlib import Path
 
-from .Helpers.structures import Intermediate, Format, File
+from aiohttp_client_cache.session import CachedSession
+
 from .Helpers.resourceAPI import ResourceAPI_Batched
+from .Helpers.structures import File, Format, Intermediate
 from .Helpers.utils import get_hash
+
 
 class Parser(Format):
 
-    def __init__(self, path: Path, session: ClientSession) -> None:
+    def __init__(self, path: Path, session: CachedSession) -> None:
 
         self.intermediate = Intermediate()
         self.resourceAPI = ResourceAPI_Batched(session, self.intermediate)
@@ -23,8 +24,8 @@ class Parser(Format):
 
         cfg = ConfigParser()
         cfg.read_string("[dummy_section]\n" + data)
-
-        if "name" in cfg['dummy_section']: self.intermediate.name = cfg['dummy_section']['name']
+        if name := cfg['dummy_section'].get('name'):
+            self.intermediate.name = name
 
         bdata = next(self.temp_dir.glob("**/mmc-pack.json")).read_bytes()
         pack_info = parse_json(bdata)        
@@ -54,8 +55,8 @@ class Parser(Format):
         file = File(
             name = path.name,
             hash = File.Hash(sha256=get_hash(path)),
-            path = path.as_posix(),
-            relativePath = relative_path)
+            path = path,
+            relativePath = relative_path.name)
         
         self.intermediate.overrides.append(file)
 

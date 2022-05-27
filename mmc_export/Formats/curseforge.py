@@ -1,15 +1,16 @@
 from pathlib import Path
 
-from ..Helpers.structures import Writer, Intermediate, Resource, File
+from ..Helpers.structures import File, Intermediate, Resource, Writer
+
 
 class CurseForge(Writer):
 
-    def __init__(self, path: Path, modpack_info: Intermediate) -> None:
+    def __init__(self, path: Path, intermediate: Intermediate) -> None:
 
         self.manifest = dict()
         self.modlist = list()
 
-        super().__init__(path, modpack_info)
+        super().__init__(path, intermediate)
 
     def add_resource(self, resource: Resource) -> None:
 
@@ -41,30 +42,30 @@ class CurseForge(Writer):
         self.manifest = {
             
             "minecraft": {
-                "version": self.modpack_info.minecraft_version,
+                "version": self.intermediate.minecraft_version,
                 "modLoaders": [
                     {
-                    "id": f"{self.modpack_info.modloader.type}-{self.modpack_info.modloader.version}",
+                    "id": f"{self.intermediate.modloader.type}-{self.intermediate.modloader.version}",
                     "primary": True
                     }
                 ]
             },
             "manifestType": "minecraftModpack",
             "manifestVersion": 1,
-            "name": self.modpack_info.name,
-            "version": self.modpack_info.version,
-            "author": self.modpack_info.author,
+            "name": self.intermediate.name,
+            "version": self.intermediate.version,
+            "author": self.intermediate.author,
 
             "files": [],
             "overrides": "overrides"
         }
 
-        for resource in self.modpack_info.resources:
+        for resource in self.intermediate.resources:
             if "CurseForge" in resource.providers:
                 self.add_resource(resource)
             else: self.add_override(resource.file)
 
-        for override in self.modpack_info.overrides:
+        for override in self.intermediate.overrides:
             self.add_override(override)
 
         from json import dump as write_json
@@ -77,4 +78,5 @@ class CurseForge(Writer):
             file.writelines(self.modlist)
 
         from shutil import make_archive
-        make_archive(self.modpack_path / ("CF_" + self.modpack_info.name), 'zip', self.temp_dir, '.')
+        base = self.modpack_path / ("CF_" + self.intermediate.name)
+        make_archive(base.as_posix(), 'zip', self.temp_dir, '.')

@@ -1,15 +1,16 @@
 from argparse import ArgumentParser
-from aiohttp_client_cache import CachedSession
-from aiohttp_client_cache.backends import FileBackend
-from aiohttp import TCPConnector, BasicAuth
 from importlib import import_module
 from pathlib import Path
 
+from aiohttp import TCPConnector
+from aiohttp_client_cache.backends.filesystem import FileBackend
+from aiohttp_client_cache.session import CachedSession
 from jsonpickle import encode as encode_json
 
-from .parser import Parser
-from .Helpers.utils import read_config
 from .Helpers.resourceAPI import ResourceAPI
+from .Helpers.utils import read_config
+from .parser import Parser
+
 
 async def run():
 
@@ -38,9 +39,9 @@ async def run():
     ResourceAPI.ignore_CF_flag = args.ignore_CF_flag
 
     cache = FileBackend("mmc-export", use_temp=True, allowed_methods=("GET", "POST", "HEAD"))
-    async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session:
+    async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session: 
 
-        parser = Parser(args.input, session)
+        parser = Parser(args.input, session) # type: ignore
         intermediate = await parser.parse()
         read_config(args.config, intermediate)
 
@@ -60,10 +61,10 @@ async def run():
     return 0
 
 def main():
-    import sys
     import asyncio
+    import sys
     if sys.platform.startswith("win"):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
                 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run())

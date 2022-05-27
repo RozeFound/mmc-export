@@ -1,24 +1,25 @@
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
-from dataclasses import dataclass, field
-from abc import ABC, abstractmethod
+
 
 @dataclass
 class File:
     
-    name: str = None
+    name: str = field(default_factory=str)
 
     @dataclass
     class Hash:
-        sha1: str = None
-        sha256: str = None
-        sha512: str = None
-        murmur2: int = None
+        sha1: str = field(default_factory=str)
+        sha256: str= field(default_factory=str)
+        sha512: str = field(default_factory=str)
+        murmur2: str = field(default_factory=str)
 
     hash: Hash = field(default_factory=Hash)
 
-    path: Path = None
-    relativePath: str = None
+    path: Path = field(default_factory=Path)
+    relativePath: str = field(default_factory=str)
 
 
 @dataclass
@@ -26,17 +27,17 @@ class Resource:
 
     "Represents downloadable item i.e. mod, resourcepack, shaderpack etc."
     
-    name: str = None
+    name: str = field(default_factory=str)
 
     @dataclass
     class Provider:
      
-        ID: str | int = None
-        fileID: str | int = None
-        url: str = None
+        ID: str | int | None = None
+        fileID: str | int | None = None
+        url: str = field(default_factory=str)
 
-        slug: str = None
-        author: str = None
+        slug: str = field(default_factory=str)
+        author: str = field(default_factory=str)
         
     file: File = field(default_factory=File)
     providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
@@ -45,17 +46,17 @@ class Resource:
 @dataclass
 class Intermediate:
 
-    name: str = None
-    author: str = None
-    version: str = None
-    description: str = None
+    name: str = field(default_factory=str)
+    author: str = field(default_factory=str)
+    version: str = field(default_factory=str)
+    description: str = field(default_factory=str)
 
     @dataclass
     class ModLoader:
-        type: str = None
-        version: str = None
+        type: str = field(default_factory=str)
+        version: str = field(default_factory=str)
 
-    minecraft_version: str = None
+    minecraft_version: str = field(default_factory=str)
     modloader: ModLoader = field(default_factory=ModLoader)
 
     resources: list[Resource] = field(default_factory=list)
@@ -78,9 +79,9 @@ class Format(ABC):
 
 class Writer(Format):
 
-    def __init__(self, path: Path, modpack_info: Intermediate) -> None:
+    def __init__(self, path: Path, intermediate: Intermediate) -> None:
 
-        self.modpack_info = modpack_info
+        self.intermediate = intermediate
 
         super().__init__(path)
 

@@ -1,27 +1,28 @@
 import asyncio
-from io import BytesIO
-import keyring as secret_store
-from aiohttp_client_cache import CachedSession
-from tomli import loads as parse_toml
-from urllib.parse import urlparse
 from ctypes import ArgumentError
-from pprint import pformat
 from pathlib import Path
+from pprint import pformat
+from typing import IO
+from urllib.parse import urlparse
+
+import keyring as secret_store
+from aiohttp_client_cache.session import CachedSession
+from tomli import loads as parse_toml
 
 from .structures import Intermediate, Resource
 
-def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
 
-    if isinstance(file, Path):
-        with open(file, "rb") as file:
-            data = file.read()
-    elif isinstance(file, BytesIO): data = file.read()
+def get_hash(file: Path | IO | bytes, hash_type: str = "sha256") -> str:
+
+    if isinstance(file, Path): data = file.read_bytes()
+    elif isinstance(file, IO): data = file.read()
     elif isinstance(file, bytes): data = file
     else: raise ArgumentError("Incorrect file type!")
         
-    from xxhash import xxh3_64_hexdigest
     from hashlib import sha1, sha256, sha512
+
     from murmurhash2 import murmurhash2 as murmur2
+    from xxhash import xxh3_64_hexdigest
 
     match hash_type:
         case "sha1": hash = sha1(data).hexdigest()
@@ -121,9 +122,7 @@ def read_config(cfg_path: Path, modpack_info: Intermediate):
         resource.providers['Other'] = Resource.Provider(
             ID     = None,
             fileID = None,
-            url    = url,
-            slug   = None,
-            author = None)
+            url    = url)
 
         lost_resources.remove(resource)
 
