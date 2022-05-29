@@ -61,8 +61,25 @@ class Modrinth(Writer):
         for override in self.intermediate.overrides:
             self.add_override(override)
 
+        bundled_files: list[Resource] = list()
+        from copy import deepcopy as copy_object
+
         for resource in self.intermediate.resources:
-            self.add_resource(resource)
+            resource_copy = copy_object(resource)
+            resource_copy.providers.pop('CurseForge', None)
+
+            if not resource_copy.providers:
+                self.add_override(resource.file)
+                bundled_files.append(resource)
+            else: self.add_resource(resource_copy)
+
+        print("Sources for bundled mods:\n")
+        for res in [res for res in bundled_files if res.links]:
+            link = sorted(res.links, reverse=True)[-1]
+            print(f"* [{res.name}]({link})")
+
+        no_links = [res.name for res in bundled_files if not res.links]
+        if no_links: print("\n"); print(f"Links for {','.join(no_links)} was not found")
 
         from json import dump as write_json
         with open(self.temp_dir / "modrinth.index.json", 'w') as file:

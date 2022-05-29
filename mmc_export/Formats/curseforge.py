@@ -23,7 +23,7 @@ class CurseForge(Writer):
         }
 
         self.manifest['files'].append(data)
-        mod_page_url = "https://www.curseforge.com/minecraft/mc-mods/" + provider.slug
+        mod_page_url = sorted(resource.links)[-1]
         self.modlist.append(f"<li><a href=\"{mod_page_url}\">{resource.name} (by {provider.author})</a></li>\n")
 
     def add_override(self, file: File) -> None:

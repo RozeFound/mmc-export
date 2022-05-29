@@ -38,7 +38,7 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.cache_directory = Path().home() / ".cache/mmc-export"
+        self.cache_directory = Path().home() / ".cache/mmc-export" / "v2"
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
@@ -186,6 +186,7 @@ class ResourceAPI(object):
             if parsed_link.netloc == "github.com":
                 owner, repo = parsed_link.path[1:].split('/')[:2]
                 repo = repo.removesuffix(".git")
+                resource.links.append(f"https://github.com/{owner}/{repo}")
                 break
         else: return
 
@@ -259,13 +260,14 @@ class ResourceAPI_Batched(ResourceAPI):
                 if addon := addons.get(version['id']):
 
                     resource.name = addon['name']
+                    resource.links.append(addon['links']['websiteUrl'])
                     if not self.ignore_CF_flag and not addon['allowModDistribution']: continue
 
                     resource.providers['CurseForge'] = Resource.Provider(
                         ID     = addon['id'],
                         fileID = version['file']['id'],
                         url    = version['file']['downloadUrl'],
-                        slug   = addon['slug'] if 'slug' in addon else meta['id'],
+                        slug   = addon['slug'],
                         author = addon['authors'][0]['name'])
 
     @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
@@ -350,7 +352,7 @@ class ResourceAPI_Batched(ResourceAPI):
         repositories: list[Repository] = list()
         pattern = re_compile(r"[\W_]+")
 
-        for meta, _ in self.queue:
+        for meta, resource in self.queue:
             if "contact" not in meta: continue
             for link in meta['contact'].values():
                 parsed_link = urlparse(link)
@@ -359,6 +361,7 @@ class ResourceAPI_Batched(ResourceAPI):
                     alias = pattern.sub('', meta['id'])
                     owner, name = parsed_link.path[1:].split('/')[:2]
                     repo = Repository(name.removesuffix(".git"), owner, alias)
+                    resource.links.append(f"https://github.com/{repo.owner}/{repo.name}")
                     repositories.append(repo)
                     break
             else: continue

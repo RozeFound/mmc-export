@@ -28,6 +28,7 @@ class Resource:
     "Represents downloadable item i.e. mod, resourcepack, shaderpack etc."
     
     name: str = field(default_factory=str)
+    links: list[str] = field(default_factory=list)
 
     @dataclass
     class Provider:
