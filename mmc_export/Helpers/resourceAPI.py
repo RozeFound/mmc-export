@@ -339,7 +339,7 @@ class ResourceAPI_Batched(ResourceAPI):
         if "GitHub" in self.excluded_providers: return
         
         if not self.session.headers.get('Authorization'):
-            if token := await get_github_token(self.session):
+            if token := get_github_token():
                 self.session.headers['Authorization'] = f"Bearer {token}"
             else: 
                 futures = [super()._get_github(meta, resource) for meta, resource in self.queue]

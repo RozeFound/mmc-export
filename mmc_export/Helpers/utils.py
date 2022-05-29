@@ -1,4 +1,6 @@
 import asyncio
+import sys
+from argparse import SUPPRESS, ArgumentParser, Namespace
 from ctypes import ArgumentError
 from pathlib import Path
 from pprint import pformat
@@ -34,21 +36,13 @@ def get_hash(file: Path | IO | bytes, hash_type: str = "sha256") -> str:
 
     return str(hash)
 
-def delete_github_token() -> None:
-    try: secret_store.delete_password("mmc-export", "github-token")
-    except secret_store.core.backend.errors.PasswordDeleteError: return
-
-async def get_github_token(session: CachedSession) -> str | None:
-
-    if token := secret_store.get_password("mmc-export", "github-token"):
-        return token
+async def add_github_token(session: CachedSession) -> None:
 
     client_id = "8011f22f502b091464de"
-    url = "https://github.com/login/device/code"
     session.headers['Accept'] = "application/json"
 
     async with session.disabled():
-
+        url = "https://github.com/login/device/code"
         async with session.post(url, params={"client_id": client_id}) as response:
             data = await response.json()
 
@@ -57,25 +51,67 @@ async def get_github_token(session: CachedSession) -> str | None:
             verification_uri = data['verification_uri']
             interval = data['interval']
 
-            print(f"Enter the code: {user_code}")
+            print(f" To proceed, enter the code: {user_code}")
             print(f"Here: {verification_uri}")
 
-            payload = {"client_id": client_id, "device_code": device_code, 
-                "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
+        payload = {"client_id": client_id, "device_code": device_code, 
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
 
-            while(True):
-                url = "https://github.com/login/oauth/access_token"
-                async with session.post(url, params=payload) as response:
-                    data = await response.json()
+        while(True):      
+            url = "https://github.com/login/oauth/access_token"
+            async with session.post(url, params=payload) as response:
+                data = await response.json()
 
-                    match data.get('error'):
-                        case "authorization_pending": await asyncio.sleep(interval); continue
-                        case "expired_token": print("Confirmation time is expired"); return
-                        case "access_denied": print("Token request declined"); return
+                match data.get('error'):
+                    case "authorization_pending": await asyncio.sleep(interval); continue
+                    case "expired_token": print("Confirmation time is expired"); return
+                    case "access_denied": print("Token request declined"); return
 
-                    if token := data.get('access_token'):
-                        secret_store.set_password("mmc-export", "github-token", token)
-                        return token
+                if token := data.get('access_token'):
+                    secret_store.set_password("mmc-export", "github-token", token)
+                    print("Succsesfully authorized!")
+                    return
+
+def delete_github_token() -> None:
+    try: secret_store.delete_password("mmc-export", "github-token")
+    except secret_store.core.backend.errors.PasswordDeleteError: return
+
+def get_github_token() -> str | None:
+    return secret_store.get_password("mmc-export", "github-token")
+
+def parse_args() -> Namespace:
+
+    formats = ('packwiz', 'Modrinth', 'CurseForge', 'Intermediate')
+    mr_search = ('exact', 'accurate', 'loose')
+    providers = ('GitHub', 'CurseForge', 'Modrinth')
+ 
+    arg_parser = ArgumentParser(usage=SUPPRESS, add_help=False)
+    arg_parser.add_argument('-h', '--help', dest="help", action='store_true')
+    arg_parser.add_argument('-c', '--config', dest='config', type=Path)
+    arg_parser.add_argument('-i', '--input', dest='input', type=Path)
+    arg_parser.add_argument('-f', '--format', dest='formats', type=str, nargs="+", choices=formats)
+    arg_parser.add_argument('-o', '--output', dest='output', type=Path, default=Path.cwd())
+    arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
+    arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=str())
+    arg_parser.add_argument('--exclude-forbidden', dest='ignore_CF_flag', action='store_false')
+
+    arg_subs = arg_parser.add_subparsers(dest='cmd')
+    arg_subs.add_parser('gh-login', add_help=False)
+    arg_subs.add_parser('gh-logout', add_help=False)
+    
+    args = arg_parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    if args.help: 
+        print("mmc-export: Export MMC modpack to other modpack formats")
+        print("Usage examples you can find here: https://github.com/RozeFound/mmc-export#how-to-use")
+
+    if not args.cmd:
+        if not args.input: arg_parser.error("Input must be specified!")
+        if not args.formats: arg_parser.error("At least one format must be specified!")
+        if not args.input.exists(): arg_parser.error("Invalid input!")
+
+    return args
+
 
 def read_config(cfg_path: Path, modpack_info: Intermediate):
 
