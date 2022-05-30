@@ -1,5 +1,6 @@
 import asyncio
 from collections import namedtuple
+from datetime import datetime
 from json import loads as parse_json
 from pathlib import Path
 from re import compile as re_compile
@@ -42,7 +43,7 @@ class ResourceAPI(object):
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
-    
+
     async def get(self, path: Path) -> Resource:
 
         meta, resource = self._get_raw_info(path)
@@ -58,9 +59,9 @@ class ResourceAPI(object):
 
     def _get_raw_info(self, path: Path) -> tuple[dict, Resource]:
 
+        from pickle import HIGHEST_PROTOCOL
         from pickle import dumps as serialize
         from pickle import loads as deserialize
-        from pickle import HIGHEST_PROTOCOL
 
         cache_file = self.cache_directory / get_hash(path, "xxhash")
         if cache_file.exists():
@@ -255,7 +256,7 @@ class ResourceAPI_Batched(ResourceAPI):
                 addons = {addon['id']: addon for addon in addons_array}
             else: return
 
-        for meta, resource in self.queue:
+        for _, resource in self.queue:
             if version := versions.get(resource.file.hash.murmur2):
                 if addon := addons.get(version['id']):
 
@@ -349,9 +350,21 @@ class ResourceAPI_Batched(ResourceAPI):
             if token := get_github_token():
                 self.session.headers['Authorization'] = f"Bearer {token}"
             else: 
-                futures = [super()._get_github(meta, resource) for meta, resource in self.queue]
+                futures = [self._get_github(meta, resource) for meta, resource in self.queue]
                 await asyncio.gather(*futures)
-                return
+
+                async with self.session.disabled():
+                    async with self.session.get("https://api.github.com/rate_limit") as response:
+                        ratelimit = (await response.json())['resources']['core']
+                        time_remaining = datetime.fromtimestamp(float(ratelimit['reset'])).strftime("%H:%M")
+                        remaining, limit = ratelimit['remaining'], ratelimit['limit']
+                        if ratelimit['remaining'] == 0: 
+                            print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
+                            print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining}")
+                        else:
+                            print(f"{remaining}/{limit} GitHub searches remaining, after that only cached results will be used.")
+                            print(f"To get more searches, sign in with `mmc-export gh-login` or wait until {time_remaining} to get {limit} searches again.")
+                    return
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
