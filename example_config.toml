@@ -1,15 +1,18 @@
 name = "My Beautiful Pack" # modpack name, recommended
 author = "RozeFound" # modpack author, recommended
-version = "0.0.7" # modpack version, required, will be prompted if not specified
+version = "0.0.8" # modpack version, required, will be prompted if not specified
 description = "Cool pack, isn't it?" # optional
 
-#Available url domains:
+# Available url domains:
 #
 #    cdn.modrinth.com
-#    edge.forgecdn.net
-#    media.forgecdn.net
 #    github.com
 #    raw.githubusercontent.com
+
+# Forbidden url domains:
+#    edge.forgecdn.net
+#    media.forgecdn.net
+# Still can be used, but will raise an error if --exclude-forbidden specified
 
 [[Resource]]
 # resource name, for  fabric mods it's `name` field in fabric.mod.json
