@@ -35,8 +35,8 @@ class Modrinth(Writer):
         from shutil import copy2 as copy_file
         copy_file(file.path, file_path)
 
-    def write(self) -> None:
-
+    def write_index(self) -> None:
+        
         match self.intermediate.modloader.type:
             case "fabric": modloader = "fabric-loader"
             case "quilt": modloader = "quilt-loader"
@@ -58,6 +58,34 @@ class Modrinth(Writer):
             }
         }
 
+    def print_bundled(self, bundled: list[Resource]) -> None: 
+
+        gh_links = []
+        other_links = []
+
+        for res in [res for res in bundled if res.links]:
+            link = sorted(set(res.links), reverse=True)[-1]
+            md_link = (f"* [{res.name}]({link})")
+            if link.startswith("https://github.com"): 
+                gh_links.append(md_link)
+            else: other_links.append(md_link)
+
+        newline = '\n'
+        message = "Sources for bundled mods:\n\n"
+        message +=f"GitHub links\n{newline.join(gh_links)}\n"
+        message +=f"\nOther links\n{newline.join(other_links)}\n"
+
+        no_links = [res.name for res in bundled if not res.links]
+        if no_links: print("\n"); message += f"Links for {','.join(no_links)} was not found\n"
+        message +="\nAlways check the licenses to see if they allow distribution!"
+
+        md_file = self.modpack_path / "bundled_links.md"
+        md_file.write_text(message)
+
+    def write(self) -> None:
+
+        self.write_index()
+
         for override in self.intermediate.overrides:
             self.add_override(override)
 
@@ -73,13 +101,7 @@ class Modrinth(Writer):
                 bundled_files.append(resource)
             else: self.add_resource(resource_copy)
 
-        print("Sources for bundled mods:\n")
-        for res in [res for res in bundled_files if res.links]:
-            link = sorted(res.links, reverse=True)[-1]
-            print(f"* [{res.name}]({link})")
-
-        no_links = [res.name for res in bundled_files if not res.links]
-        if no_links: print("\n"); print(f"Links for {','.join(no_links)} was not found")
+        self.print_bundled(bundled_files)
 
         from json import dump as write_json
         with open(self.temp_dir / "modrinth.index.json", 'w') as file:
