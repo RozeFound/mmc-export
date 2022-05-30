@@ -36,6 +36,9 @@ def get_hash(file: Path | IO | bytes, hash_type: str = "sha256") -> str:
 
     return str(hash)
 
+def get_hashes(file: Path | IO | bytes, *args: str):
+    return [get_hash(file, hash_type) for hash_type in args]
+
 async def add_github_token(session: CachedSession) -> None:
 
     client_id = "8011f22f502b091464de"
@@ -112,21 +115,20 @@ def parse_args() -> Namespace:
 
     return args
 
-
-def read_config(cfg_path: Path, modpack_info: Intermediate):
+def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
 
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
-    lost_resources = [res for res in modpack_info.resources if not res.providers]
+    lost_resources = [res for res in intermediate.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
         config = parse_toml(cfg_path.read_text())
     else: config = {}
 
-    modpack_info.name = config.get('name', modpack_info.name)
-    modpack_info.author = config.get('author', modpack_info.author)
-    modpack_info.version = config.get('version', modpack_info.version)
-    modpack_info.description = config.get('description', modpack_info.description)
-    if not modpack_info.version: modpack_info.version = input("Specify modpack version: ")
+    intermediate.name = config.get('name', intermediate.name)
+    intermediate.author = config.get('author', intermediate.author)
+    intermediate.version = config.get('version', intermediate.version)
+    intermediate.description = config.get('description', intermediate.description)
+    if not intermediate.version: intermediate.version = input("Specify modpack version: ")
 
     for resource_config in config.get('Resource', []):
 
@@ -139,12 +141,12 @@ def read_config(cfg_path: Path, modpack_info: Intermediate):
 
         match resource_config.get("action"):
             case "remove": 
-                modpack_info.resources.remove(resource)
+                intermediate.resources.remove(resource)
                 lost_resources.remove(resource)
                 continue
             case "override": 
-                modpack_info.overrides.append(resource.file)
-                modpack_info.resources.remove(resource)
+                intermediate.overrides.append(resource.file)
+                intermediate.resources.remove(resource)
                 lost_resources.remove(resource)
 
                 continue
@@ -164,6 +166,33 @@ def read_config(cfg_path: Path, modpack_info: Intermediate):
 
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)
-        modpack_info.overrides.append(resource.file)
-        modpack_info.resources.remove(resource)
+        intermediate.overrides.append(resource.file)
+        intermediate.resources.remove(resource)
         
+async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> None: 
+
+    async def download_file(url: str) -> tuple[str, bytes]:
+        async with session.get(url) as response:
+            assert response.status == 200
+            return url, await response.read()
+
+    futures = [download_file(r.providers['Other'].url) for r 
+        in intermediate.resources if "Other" in r.providers]
+    files = await asyncio.gather(*futures)
+
+    for resource in intermediate.resources:
+        if provider := resource.providers.get('Other'):
+            cloud_file = next(file for url, file in files if url == provider.url)
+            sha1, sha256, sha512 = get_hashes(cloud_file, "sha1", "sha256", "sha512")
+            if "Modrinth" in resource.providers:
+                if resource.file.hash.sha1 != sha1 or resource.file.hash.sha512 != sha512:
+                    resource.providers.pop("Other")
+            else: 
+                resource.file.hash.sha1 = sha1
+                resource.file.hash.sha256 = sha256 
+                resource.file.hash.sha512 = sha512 
+            
+
+
+            
+

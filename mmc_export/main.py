@@ -6,7 +6,8 @@ from aiohttp_client_cache.session import CachedSession
 from jsonpickle import encode as encode_json
 
 from .Helpers.resourceAPI import ResourceAPI
-from .Helpers.utils import add_github_token, parse_args, read_config
+from .Helpers.utils import (add_github_token, parse_args, read_config_into,
+                            resolve_conflicts)
 from .parser import Parser
 
 
@@ -29,7 +30,8 @@ async def run():
 
         parser = Parser(args.input, session) # type: ignore
         intermediate = await parser.parse()
-        read_config(args.config, intermediate)
+        read_config_into(args.config, intermediate)
+        await resolve_conflicts(session, intermediate) # type: ignore
 
         for format in args.formats:
 
