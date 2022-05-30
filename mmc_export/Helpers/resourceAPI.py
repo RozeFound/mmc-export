@@ -261,6 +261,8 @@ class ResourceAPI_Batched(ResourceAPI):
 
                     resource.name = addon['name']
                     resource.links.append(addon['links']['websiteUrl'])
+                    if srcUrl := addon['links']['sourceUrl']:
+                        resource.links.append(srcUrl)
                     if not self.ignore_CF_flag and not addon['allowModDistribution']: continue
 
                     resource.providers['CurseForge'] = Resource.Provider(
@@ -332,6 +334,9 @@ class ResourceAPI_Batched(ResourceAPI):
                             fileID = version['id'],
                             url    = version['files'][0]['url'],
                             slug   = meta['id'])
+
+                        resource.file.hash.sha1 = version['files'][0]['hashes']['sha1']
+                        resource.file.hash.sha512 = version['files'][0]['hashes']['sha512']
 
                         break
 
