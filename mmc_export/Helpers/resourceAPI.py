@@ -44,19 +44,6 @@ class ResourceAPI(object):
 
         super().__init__()
 
-    async def get(self, path: Path) -> Resource:
-
-        meta, resource = self._get_raw_info(path)
-
-        futures = (
-            self._get_curseforge(meta, resource),
-            self._get_modrinth(meta, resource),
-            self._get_github(meta, resource)
-        )
-
-        await asyncio.gather(*futures)
-        return resource
-
     def _get_raw_info(self, path: Path) -> tuple[dict, Resource]:
 
         from pickle import HIGHEST_PROTOCOL
@@ -100,82 +87,6 @@ class ResourceAPI(object):
 
         return meta, resource
     
-    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
-    async def _get_curseforge(self, meta: dict, resource: Resource) -> None:
-
-        if "CurseForge" in self.excluded_providers: return
-
-        async with self.session.post(f"{self.curseforge}/fingerprints", json={"fingerprints":[resource.file.hash.murmur2]}) as response:
-            json = await response.json()
-            if matches := json['data']['exactMatches']:
-                version = matches[0]
-            else: return
-
-        async with self.session.get(f"{self.curseforge}/mods/{version['id']}") as response:
-            if response.status != 200 and response.status != 504: return
-
-            addon = await response.json()
-            resource.name = addon['data']['name']
-            if not self.ignore_CF_flag and not addon['data']['allowModDistribution']: return
-
-            resource.providers['CurseForge'] = Resource.Provider(
-                ID     = version['id'],
-                fileID = version['file']['id'],
-                url    = version['file']['downloadUrl'],
-                slug   = addon['data']['slug'] if 'slug' in addon['data'] else meta['id'],
-                author = addon['data']['authors'][0]['name'])
-
-    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
-    async def _get_modrinth(self, meta: dict, resource: Resource) -> None:
-
-        if "Modrinth" in self.excluded_providers: return
-
-        async with self.session.get(f"{self.modrinth}/version_file/{resource.file.hash.sha1}") as response: 
-            if response.status != 200 and response.status != 504 and response.status != 423: 
-                if self.modrinth_search_type != "exact":
-                    await self._get_modrinth_loose(meta, resource)
-                return
-
-            version = await response.json()
-
-            resource.providers['Modrinth'] = Resource.Provider(
-                    ID     = version['project_id'],
-                    fileID = version['id'],
-                    url    = version['files'][0]['url'],
-                    slug   = meta['id'])       
-
-    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
-    async def _get_modrinth_loose(self, meta: dict, resource: Resource) -> None:
-
-        if self.modrinth_search_type == "loose":      
-            async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
-                if response.status != 200 and response.status != 504 and response.status != 423: return
-                json = await response.json()
-                if hits := json['hits']: addon_id = hits[0]['project_id']
-                else: return
-        elif self.modrinth_search_type == "accurate": addon_id = meta['id']
-        else: return
-
-        placeholder = f'{self.modrinth}/project/{addon_id}/version?loaders=["{{}}"]&game_versions=["{{}}"]'
-        url = placeholder.format(self.intermediate.modloader.type, self.intermediate.minecraft_version)
-
-        async with self.session.get(url) as response:
-            if response.status != 200 and response.status != 504 and response.status != 423: return
-
-            versions = await response.json()
-
-            for version in versions:
-
-                if meta['version'] in version['version_number']:
-
-                    resource.providers['Modrinth'] = Resource.Provider(
-                        ID     = addon_id,
-                        fileID = version['id'],
-                        url    = version['files'][0]['url'],
-                        slug   = meta['id'])
-
-                    return      
-
     @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_github(self, meta: dict, resource: Resource) -> None:
 
