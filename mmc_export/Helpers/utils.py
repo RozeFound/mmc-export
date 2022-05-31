@@ -120,7 +120,6 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
     forbidden_domains = ("edge.forgecdn.net", "media.forgecdn.net")
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
     if exclude_forbidden: allowed_domains = tuple(domain for domain in allowed_domains if domain not in forbidden_domains)
-    lost_resources = [res for res in intermediate.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
         config = parse_toml(cfg_path.read_text())
@@ -138,19 +137,16 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
         name = resource_config.get('name')
         filename = resource_config.get('filename')
 
-        resource = next((x for x in lost_resources if name in x.name or filename in x.file.name), None)
+        resource = next((x for x in intermediate.resources if name in x.name or filename in x.file.name), None)
         if not resource: continue
 
         match resource_config.get("action"):
             case "remove": 
                 intermediate.resources.remove(resource)
-                lost_resources.remove(resource)
                 continue
             case "override": 
                 intermediate.overrides.append(resource.file)
                 intermediate.resources.remove(resource)
-                lost_resources.remove(resource)
-
                 continue
 
         if not url: print(f"Failed to read config for {resource.name}, you must specify url!"); continue
@@ -164,9 +160,7 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
             fileID = None,
             url    = url)
 
-        lost_resources.remove(resource)
-
-    for resource in lost_resources:
+    for resource in [res for res in intermediate.resources if not res.providers]:
         print("No config entry found for resource:", resource.name)
         intermediate.overrides.append(resource.file)
         intermediate.resources.remove(resource)
