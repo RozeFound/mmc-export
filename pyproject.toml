@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.3.2"
+version = "2.3.3"
 description = "Export MMC modpack to other modpack formats"
 authors = ["RozeFound"]
 license = "MIT"

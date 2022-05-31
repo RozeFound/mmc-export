@@ -31,13 +31,25 @@ If you don't want to use github search by some reason, you can specify `--exclud
 mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpacks
 ```
 It's recommended to fill config at least with basic info like name and version, some launchers can fail import if these values are empty.
-## Syntax:
+
+## Sub-commands
+
+`gh-login` - to authrize GitHub \
+`gh-logout` - to get info how to deauthorize GitHub 
+
+`purge-cache` - to purge cache. Available arguments:
 ```
-mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+--web: to delete requests cache and downloaded mods
+--files: to delete hashes cache
+--all: equivalent to --web --files, deletes all cache (default)
 ```
 
-### Explanation:
+## Syntax
+```
+mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+```
 
+### Explanation
 ```
 -h --help: prints help
 -i --input: path to modpack, must be zip file exported from MultiMC.
@@ -48,7 +60,7 @@ mmc-export [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SE
 --exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
-All paths can be relative to current working directory or absolute.
+> All paths can be relative to current working directory or absolute.
 
 `--format` options (case-sensitive): 
 - `CurseForge`

@@ -97,16 +97,26 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=str())
     arg_parser.add_argument('--exclude-forbidden', dest='ignore_CF_flag', action='store_false')
+    arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
 
     arg_subs = arg_parser.add_subparsers(dest='cmd')
     arg_subs.add_parser('gh-login', add_help=False)
     arg_subs.add_parser('gh-logout', add_help=False)
+
+    arg_cache = arg_subs.add_parser('purge-cache', add_help=False)
+    arg_cache.add_argument('--web', dest='cache_web', action='store_true')
+    arg_cache.add_argument('--files', dest='cache_files', action='store_true')
+    arg_cache.add_argument('--all', dest='cache_all', action='store_true')
     
     args = arg_parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     if args.help: 
         print("mmc-export: Export MMC modpack to other modpack formats")
         print("Usage examples you can find here: https://github.com/RozeFound/mmc-export#how-to-use")
+
+    if args.cmd and args.cmd == "purge-cache":
+        if not args.cache_web or not args.cache_files or not args.cache_all:
+            args.cache_all = True
 
     if not args.cmd:
         if not args.input: arg_parser.error("Input must be specified!")
@@ -188,7 +198,3 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
             
-
-
-            
-
