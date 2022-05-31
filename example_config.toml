@@ -31,12 +31,11 @@ name = "Complementary Shaders"
 filename = "ComplementaryShaders_v4.1.zip"
 url = "https://edge.forgecdn.net/files/3391/516/ComplementaryShaders_v4.1.zip"
 
+# field action can contain "override", "remove", or "ignore"
 [[Resource]]
 name = "Mod Menu Helper"
 filename = "Mod Menu Helper.zip" 
-action = "override" # default behavior, moves resource to overrides. If specified directly supress the warning 
-# field action can contain "override" or "remove"
-# if field action is present, url is not required
+action = "override" # force move resource to overrides
 
 [[Resource]]
 name = "Farsight Mod"
