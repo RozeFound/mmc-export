@@ -58,29 +58,28 @@ class Modrinth(Writer):
             }
         }
 
-    def print_bundled(self, bundled: list[Resource]) -> None: 
+    def print_bundled(self, bundled_files: list[Resource]) -> None: 
 
         gh_links = []
         other_links = []
 
-        for res in [res for res in bundled if res.links]:
-            link = sorted(set(res.links), reverse=True)[-1]
-            md_link = (f"* [{res.name}]({link})")
+        for resource in bundled_files:
+            if not resource.links: link = "link unknown"
+            link = sorted(set(resource.links), reverse=True)[-1]
+            md_link = (f"* [{resource.name}]({link})")
             if link.startswith("https://github.com"): 
                 gh_links.append(md_link)
             else: other_links.append(md_link)
 
         newline = '\n'
         message = "Sources for bundled mods:\n\n"
-        message +=f"GitHub links\n{newline.join(gh_links)}\n"
-        message +=f"\nOther links\n{newline.join(other_links)}\n"
+        if gh_links: message +=f"GitHub links\n{newline.join(gh_links)}\n"
+        if other_links: message +=f"\nOther links\n{newline.join(other_links)}\n"
 
-        no_links = [res.name for res in bundled if not res.links]
-        if no_links: print("\n"); message += f"Links for {','.join(no_links)} was not found\n"
         message +="\nAlways check the licenses to see if they allow distribution!"
 
         md_file = self.modpack_path / "bundled_links.md"
-        md_file.write_text(message)
+        if gh_links or other_links: md_file.write_text(message)
 
     def write(self) -> None:
 
