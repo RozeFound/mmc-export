@@ -56,7 +56,7 @@ class Parser(Format):
             name = path.name,
             hash = File.Hash(sha256=get_hash(path)),
             path = path,
-            relativePath = relative_path.name)
+            relativePath = relative_path.as_posix())
         
         self.intermediate.overrides.append(file)
 
