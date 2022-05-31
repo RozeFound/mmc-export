@@ -268,13 +268,9 @@ class ResourceAPI_Batched(ResourceAPI):
                     async with self.session.get("https://api.github.com/rate_limit") as response:
                         ratelimit = (await response.json())['resources']['core']
                         time_remaining = datetime.fromtimestamp(float(ratelimit['reset'])).strftime("%H:%M")
-                        remaining, limit = ratelimit['remaining'], ratelimit['limit']
                         if ratelimit['remaining'] == 0: 
                             print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
                             print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining}")
-                        else:
-                            print(f"{remaining}/{limit} GitHub searches remaining, after that only cached results will be used.")
-                            print(f"To get more searches, sign in with `mmc-export gh-login` or wait until {time_remaining} to get {limit} searches again.")
                     return
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
