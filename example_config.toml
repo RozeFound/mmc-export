@@ -10,8 +10,10 @@ description = "Cool pack, isn't it?" # optional
 #    raw.githubusercontent.com
 
 # Forbidden url domains:
+#
 #    edge.forgecdn.net
 #    media.forgecdn.net
+#
 # Still can be used, but will raise an error if --exclude-forbidden specified
 
 [[Resource]]
