@@ -1,6 +1,6 @@
 name = "My Beautiful Pack" # modpack name, recommended
 author = "RozeFound" # modpack author, recommended
-version = "0.0.8" # modpack version, required, will be prompted if not specified
+version = "0.0.9" # modpack version, required, will be prompted if not specified
 description = "Cool pack, isn't it?" # optional
 
 # Available url domains:
@@ -42,3 +42,7 @@ action = "override" # default behavior, moves resource to overrides. If specifie
 name = "Farsight Mod"
 filename = "farsight.fabric-1.18-1.9.jar"
 action = "remove" # deletes resource from pack completely
+
+[[Resource]]
+name = "YOSBR"
+action = "ignore" # Shut up the warning

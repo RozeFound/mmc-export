@@ -130,6 +130,8 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
     forbidden_domains = ("edge.forgecdn.net", "media.forgecdn.net")
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
     if exclude_forbidden: allowed_domains = tuple(domain for domain in allowed_domains if domain not in forbidden_domains)
+    
+    lost_resources = [res for res in intermediate.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
         config = parse_toml(cfg_path.read_text())
@@ -144,36 +146,35 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
     for resource_config in config.get('Resource', []):
 
         url = resource_config.get('url')
-        name = resource_config.get('name')
-        filename = resource_config.get('filename')
+        name = resource_config.get('name', "")
+        filename = resource_config.get('filename', "")
 
-        resource = next((x for x in intermediate.resources if name in x.name or filename in x.file.name), None)
+        resource = next((x for x in intermediate.resources if name == x.name or filename == x.file.name), None)
         if not resource: continue
 
         match resource_config.get("action"):
+
+            case None: # if action not specified, try to add a provider
+                if not url: 
+                    print(f"Failed to read config for {resource.name}, you must specify url!")
+                elif urlparse(url).netloc not in allowed_domains:
+                    print(f"Failed to read config for {resource.name}, wrong url domain!")
+                    print(f"Allowed domains: {pformat(allowed_domains)}")
+                else: resource.providers['Other'] = Resource.Provider(url = url)
+
             case "remove": 
                 intermediate.resources.remove(resource)
-                continue
             case "override": 
                 intermediate.overrides.append(resource.file)
                 intermediate.resources.remove(resource)
-                continue
+            case "ignore": pass
+            case _: print(f"Wrong action for {resource.name}!")
 
-        if not url: print(f"Failed to read config for {resource.name}, you must specify url!"); continue
-        if urlparse(url).netloc not in allowed_domains:
-            print(f"Failed to read config for {resource.name}, wrong url domain!")
-            print(f"Allowed domains: {pformat(allowed_domains)}")
-            continue
+        if resource in lost_resources:
+            lost_resources.remove(resource)
 
-        resource.providers['Other'] = Resource.Provider(
-            ID     = None,
-            fileID = None,
-            url    = url)
-
-    for resource in [res for res in intermediate.resources if not res.providers]:
+    for resource in lost_resources:
         print("No config entry found for resource:", resource.name)
-        intermediate.overrides.append(resource.file)
-        intermediate.resources.remove(resource)
         
 async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> None: 
 

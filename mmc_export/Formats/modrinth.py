@@ -64,9 +64,12 @@ class Modrinth(Writer):
         other_links = []
 
         for resource in bundled_files:
-            if not resource.links: link = "link unknown"
-            link = sorted(set(resource.links), reverse=True)[-1]
-            md_link = (f"* [{resource.name}]({link})")
+
+            if resource.links:
+                link = sorted(set(resource.links), reverse=True)[-1]
+                md_link = f"* [{resource.name}]({link})"
+            else: md_link = f"* {resource.name} (link unknown)"; link = ""
+
             if link.startswith("https://github.com"): 
                 gh_links.append(md_link)
             else: other_links.append(md_link)

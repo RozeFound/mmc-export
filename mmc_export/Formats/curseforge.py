@@ -14,17 +14,19 @@ class CurseForge(Writer):
 
     def add_resource(self, resource: Resource) -> None:
 
-        provider = resource.providers['CurseForge']
+        if provider := resource.providers.get('CurseForge'):
 
-        data = {
-            "projectID": provider.ID,
-            "fileID": provider.fileID,
-            "required": True
-        }
+            data = {
+                "projectID": provider.ID,
+                "fileID": provider.fileID,
+                "required": True
+            }
 
-        self.manifest['files'].append(data)
-        mod_page_url = sorted(set(resource.links))[-1]
-        self.modlist.append(f"<li><a href=\"{mod_page_url}\">{resource.name} (by {provider.author})</a></li>\n")
+            self.manifest['files'].append(data)
+            mod_page_url = sorted(set(resource.links))[-1]
+            self.modlist.append(f"<li><a href=\"{mod_page_url}\">{resource.name} (by {provider.author})</a></li>\n")
+
+        else: self.add_override(resource.file)
 
     def add_override(self, file: File) -> None:
 
@@ -66,9 +68,7 @@ class CurseForge(Writer):
         self.write_manifest()
 
         for resource in self.intermediate.resources:
-            if "CurseForge" in resource.providers:
-                self.add_resource(resource)
-            else: self.add_override(resource.file)
+            self.add_resource(resource)
 
         for override in self.intermediate.overrides:
             self.add_override(override)

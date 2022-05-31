@@ -98,6 +98,13 @@ url = "https://cdn.modrinth.com/data/abcdefg/versions/1.0.0/the_name_of_the.jar"
 [[Resource]]
 name = "ModName"
 filename = "the_name_of_the.jar" 
+action = "ignore"
+```
+#### Explcicitly move to overrides
+```
+[[Resource]]
+name = "ModName"
+filename = "the_name_of_the.jar" 
 action = "override"
 ```
 #### Delete the file altogether
