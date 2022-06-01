@@ -76,7 +76,7 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 
 `--modrinth-search` options:
 - `exact` - by hash (default)
-- `accurate`- by hash or slug
+- `accurate` - by hash or slug
 - `loose` - by hash, slug or long name
 
 The example for the optional `--config` file [can be found here](example_config.toml). 
@@ -101,7 +101,7 @@ name = "ModName"
 filename = "the_name_of_the.jar" 
 action = "ignore"
 ```
-#### Explcicitly move to overrides
+#### Explicitly move to overrides
 ```
 [[Resource]]
 name = "ModName"
