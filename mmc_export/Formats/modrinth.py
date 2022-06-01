@@ -107,7 +107,7 @@ class Modrinth(Writer):
 
         from json import dump as write_json
         with open(self.temp_dir / "modrinth.index.json", 'w') as file:
-            write_json(self.index, file)
+            write_json(self.index, file, indent=4)
 
         from shutil import make_archive
         base = self.modpack_path / ("MR_" + self.intermediate.name)

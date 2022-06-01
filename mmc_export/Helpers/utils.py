@@ -98,6 +98,7 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=str())
     arg_parser.add_argument('--exclude-forbidden', dest='ignore_CF_flag', action='store_false')
     arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
+    arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
 
     arg_subs = arg_parser.add_subparsers(dest='cmd')
     arg_subs.add_parser('gh-login', add_help=False)

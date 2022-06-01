@@ -46,7 +46,7 @@ It's recommended to fill config at least with basic info like name and version, 
 
 ## Syntax
 ```
-mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VERSION] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
 ```
 
 ### Explanation
@@ -56,6 +56,7 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [--modr
 -c --config: path to config, used to fill the gaps like description or losted mods.
 -f --format: output formats, must be separated by spaces.
 -o --output: directory where converted zip files will be stored.
+-v --version: specify modpack version, will be overriden by config's value if exists
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
 --exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.

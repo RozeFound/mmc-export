@@ -75,7 +75,7 @@ class CurseForge(Writer):
 
         from json import dump as write_json
         with open(self.temp_dir / "manifest.json", 'w') as file:
-            write_json(self.manifest, file)
+            write_json(self.manifest, file, indent=4)
 
         with open(self.temp_dir / "modlist.html", 'w') as file:
             self.modlist.insert(0, "<ul>\n")

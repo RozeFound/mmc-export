@@ -40,6 +40,7 @@ async def run():
 
         parser = Parser(args.input, session) # type: ignore
         intermediate = await parser.parse()
+        if version := args.modpack_version: intermediate.version = version
         read_config_into(args.config, intermediate, not args.ignore_CF_flag)
         await resolve_conflicts(session, intermediate) # type: ignore
 
