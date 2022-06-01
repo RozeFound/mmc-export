@@ -100,7 +100,7 @@ name = "ModName"
 filename = "the_name_of_the.jar" 
 action = "ignore"
 ```
-#### Explcicitly move to overrides
+#### Explicitly move to overrides
 ```
 [[Resource]]
 name = "ModName"
