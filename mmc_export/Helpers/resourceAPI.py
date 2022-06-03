@@ -193,7 +193,7 @@ class ResourceAPI_Batched(ResourceAPI):
         payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
         async with self.session.post(f"{self.modrinth}/version_files", json=payload) as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            versions = {v[1]['files'][0]['hashes']["sha1"]: v[1] for v in await response.json()}
+            versions = await response.json()
 
             for meta, resource in self.queue:
                 if version := versions.get(resource.file.hash.sha1):
