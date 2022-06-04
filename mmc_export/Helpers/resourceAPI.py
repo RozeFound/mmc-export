@@ -198,10 +198,13 @@ class ResourceAPI_Batched(ResourceAPI):
             for meta, resource in self.queue:
                 if version := versions.get(resource.file.hash.sha1):
 
+                    file = next(file for file in version['files'] 
+                        if file['filename'] == resource.file.name or file['primary'])
+
                     resource.providers['Modrinth'] = Resource.Provider(
                     ID     = version['project_id'],
                     fileID = version['id'],
-                    url    = version['files'][0]['url'],
+                    url    = file['url'],
                     slug   = meta['id'])
                 else: search_queue.append((meta, resource))
 
@@ -241,14 +244,17 @@ class ResourceAPI_Batched(ResourceAPI):
                         and self.intermediate.minecraft_version in version['game_versions'] \
                         and self.intermediate.modloader.type in version['loaders']:
 
+                        file = next(file for file in version['files'] 
+                            if file['filename'] == resource.file.name or file['primary'])
+
                         resource.providers['Modrinth'] = Resource.Provider(
                             ID     = version['project_id'],
                             fileID = version['id'],
-                            url    = version['files'][0]['url'],
+                            url    = file['url'],
                             slug   = meta['id'])
 
-                        resource.file.hash.sha1 = version['files'][0]['hashes']['sha1']
-                        resource.file.hash.sha512 = version['files'][0]['hashes']['sha512']
+                        resource.file.hash.sha1 = file['hashes']['sha1']
+                        resource.file.hash.sha512 = file['hashes']['sha512']
 
                         break
 
