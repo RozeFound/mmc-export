@@ -199,7 +199,8 @@ class ResourceAPI_Batched(ResourceAPI):
                 if version := versions.get(resource.file.hash.sha1):
 
                     file = next(file for file in version['files'] 
-                        if file['filename'] == resource.file.name or file['primary'])
+                        if resource.file.hash.sha1 == file['hashes']['sha1']
+                        and resource.file.hash.sha512 == file['hashes']['sha512'])
 
                     resource.providers['Modrinth'] = Resource.Provider(
                     ID     = version['project_id'],
