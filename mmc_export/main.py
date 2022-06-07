@@ -48,7 +48,7 @@ async def run():
         for format in args.formats:
 
             if format == "Intermediate":
-                with Path(args.output / "intermediate_output.json").open("w") as file:
+                with open(args.output / "intermediate_output.json", "w") as file:
                     write_json(intermediate.to_dict(), file, indent=4)
                 continue
 

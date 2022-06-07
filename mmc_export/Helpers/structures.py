@@ -66,7 +66,6 @@ class Resource:
     providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
 
     def to_dict(self):
-
         return {
             "name": self.name,
             "links": self.links,

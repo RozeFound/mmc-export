@@ -21,7 +21,8 @@ class packwiz(Writer):
 
     def add_resource(self, resource: Resource) -> None:
 
-        if not resource.providers: self.add_override(resource.file)
+        if not resource.providers: 
+            self.add_override(resource.file); return
     
         data = {
             "name": resource.name,
