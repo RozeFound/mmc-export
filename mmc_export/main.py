@@ -5,7 +5,7 @@ from shutil import rmtree
 from aiohttp import TCPConnector
 from aiohttp_client_cache.backends.filesystem import FileBackend
 from aiohttp_client_cache.session import CachedSession
-from jsonpickle import encode as encode_json
+from json import dump as write_json
 
 from .Helpers.resourceAPI import ResourceAPI
 from .Helpers.utils import (add_github_token, parse_args, read_config_into,
@@ -40,6 +40,7 @@ async def run():
 
         parser = Parser(args.input, session) # type: ignore
         intermediate = await parser.parse()
+        
         if version := args.modpack_version: intermediate.version = version
         read_config_into(args.config, intermediate, not args.ignore_CF_flag)
         await resolve_conflicts(session, intermediate) # type: ignore
@@ -47,8 +48,8 @@ async def run():
         for format in args.formats:
 
             if format == "Intermediate":
-                with open(args.output / "intermediate_output.json", "w") as file:
-                    file.write(encode_json(intermediate, indent=4, unpicklable=False))
+                with Path(args.output / "intermediate_output.json").open("w") as file:
+                    write_json(intermediate.to_dict(), file, indent=4)
                 continue
 
             module = import_module(f".Formats.{format.lower()}", "mmc_export")

@@ -21,6 +21,19 @@ class File:
     path: Path = field(default_factory=Path)
     relativePath: str = field(default_factory=str)
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "hash": {
+                "sha1": self.hash.sha1,
+                "sha256": self.hash.sha256,
+                "sha512": self.hash.sha512,
+                "murmur2": self.hash.murmur2
+            },
+            "path": self.path.as_posix(),
+            "relativePath": self.relativePath
+        }
+
 
 @dataclass
 class Resource:
@@ -39,9 +52,27 @@ class Resource:
 
         slug: str = field(default_factory=str)
         author: str = field(default_factory=str)
+
+        def to_dict(self):
+            return {
+                "ID": self.ID,
+                "fileID": self.fileID,
+                "url": self.url,
+                "slug": self.slug,
+                "author": self.author
+            }
         
     file: File = field(default_factory=File)
     providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
+
+    def to_dict(self):
+
+        return {
+            "name": self.name,
+            "links": self.links,
+            "file": self.file.to_dict(),
+            "providers": {provider: data.to_dict() for provider, data in self.providers.items()}
+        }
 
 
 @dataclass
@@ -62,6 +93,29 @@ class Intermediate:
 
     resources: list[Resource] = field(default_factory=list)
     overrides: list[File] = field(default_factory=list)
+
+    def to_dict(self):
+
+        def clean(value):
+            if isinstance(value, list): return [clean(x) for x in value if x]
+            elif isinstance(value, dict): return {key: clean(val) for key, val in value.items() if val}
+            else: return value
+
+        return clean({
+            "name": self.name,
+            "author": self.author,
+            "version": self.version,
+            "description": self.description,
+
+            "minecraft_version": self.minecraft_version,
+            "modloader": {
+                "type": self.modloader.type,
+                "version": self.modloader.version
+            },
+
+            "resources": [resource.to_dict() for resource in self.resources],
+            "overrides": [override.to_dict() for override in self.overrides]
+        })
         
 
 class Format(ABC):
