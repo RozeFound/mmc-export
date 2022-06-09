@@ -72,6 +72,7 @@ class Parser(Format):
 
         for file in [file for file in self.temp_dir.glob("**/*") if file.is_file()]:
             if file.parent.name in downloadable_content and file.suffix != ".txt": 
+                if file.suffix == ".disabled": continue
                 self.resourceAPI.queue_resource(file)
             else: overrides.append(file)
 
