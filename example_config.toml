@@ -6,6 +6,7 @@ description = "Cool pack, isn't it?" # optional
 # Available url domains:
 #
 #    cdn.modrinth.com
+#    gitlab.com
 #    github.com
 #    raw.githubusercontent.com
 

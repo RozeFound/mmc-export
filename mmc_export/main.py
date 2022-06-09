@@ -21,7 +21,7 @@ async def run():
     ResourceAPI.excluded_providers = args.excluded_providers
     ResourceAPI.ignore_CF_flag = args.ignore_CF_flag
 
-    cache = FileBackend("mmc-export", use_temp=True, allowed_methods=("GET", "POST", "HEAD"))
+    cache = FileBackend("mmc-export", use_temp=True, urls_expire_after={'*.jar': -1}, allowed_methods=("GET", "POST", "HEAD"))
     async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session: 
         if args.skip_cache: session.cache.disabled = True # type: ignore
 

@@ -129,7 +129,7 @@ def parse_args() -> Namespace:
 def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidden: bool) -> None:
 
     forbidden_domains = ("edge.forgecdn.net", "media.forgecdn.net")
-    allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "github.com", "raw.githubusercontent.com")
+    allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "gitlab.com", "github.com", "raw.githubusercontent.com")
     if exclude_forbidden: allowed_domains = tuple(domain for domain in allowed_domains if domain not in forbidden_domains)
     
     lost_resources = [res for res in intermediate.resources if not res.providers]

@@ -22,17 +22,12 @@ class File:
     relativePath: str = field(default_factory=str)
 
     def to_dict(self):
-        return {
-            "name": self.name,
-            "hash": {
-                "sha1": self.hash.sha1,
-                "sha256": self.hash.sha256,
-                "sha512": self.hash.sha512,
-                "murmur2": self.hash.murmur2
-            },
-            "path": self.path.as_posix(),
-            "relativePath": self.relativePath
-        }
+
+        data = self.__dict__.copy()
+        data['hash'] = self.hash.__dict__
+        data['path'] = self.path.as_posix()
+
+        return data
 
 
 @dataclass
@@ -53,25 +48,16 @@ class Resource:
         slug: str = field(default_factory=str)
         author: str = field(default_factory=str)
 
-        def to_dict(self):
-            return {
-                "ID": self.ID,
-                "fileID": self.fileID,
-                "url": self.url,
-                "slug": self.slug,
-                "author": self.author
-            }
-        
     file: File = field(default_factory=File)
     providers: dict[Literal['Modrinth', 'CurseForge', 'Other'], Provider] = field(default_factory=dict)
 
     def to_dict(self):
-        return {
-            "name": self.name,
-            "links": self.links,
-            "file": self.file.to_dict(),
-            "providers": {provider: data.to_dict() for provider, data in self.providers.items()}
-        }
+
+        data = self.__dict__.copy()
+        data['file'] = self.file.to_dict()
+        data['providers'] = {name: data.__dict__ for name, data in self.providers.items()}
+
+        return data
 
 
 @dataclass
@@ -100,22 +86,12 @@ class Intermediate:
             elif isinstance(value, dict): return {key: clean(val) for key, val in value.items() if val}
             else: return value
 
-        return clean({
-            "name": self.name,
-            "author": self.author,
-            "version": self.version,
-            "description": self.description,
+        data = self.__dict__.copy()
+        data['modloader'] = self.modloader.__dict__
+        data['resources'] = [resource.to_dict() for resource in self.resources]
+        data['overrides'] = [override.to_dict() for override in self.overrides]
 
-            "minecraft_version": self.minecraft_version,
-            "modloader": {
-                "type": self.modloader.type,
-                "version": self.modloader.version
-            },
-
-            "resources": [resource.to_dict() for resource in self.resources],
-            "overrides": [override.to_dict() for override in self.overrides]
-        })
-        
+        return clean(data)     
 
 class Format(ABC):
 
