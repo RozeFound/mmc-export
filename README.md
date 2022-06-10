@@ -116,7 +116,7 @@ action = "remove"
 ```
 
 #### To make mod optional you can append
-`optional=True` - to any of above
+`optional = true` - to any of above
 
 # How to Install / Update
 ```
