@@ -15,7 +15,7 @@ description = "Cool pack, isn't it?" # optional
 #    edge.forgecdn.net
 #    media.forgecdn.net
 #
-# Still can be used, but will raise an error if --exclude-forbidden specified
+# Still can be used, but not recommended for public modpacks
 
 [[Resource]]
 # resource name, for  fabric mods it's `name` field in fabric.mod.json
@@ -34,7 +34,6 @@ url = "https://edge.forgecdn.net/files/3391/516/ComplementaryShaders_v4.1.zip"
 
 # field action can contain "override", "remove", or "ignore"
 [[Resource]]
-name = "Mod Menu Helper"
 filename = "Mod Menu Helper.zip" 
 action = "override" # force move resource to overrides
 
@@ -46,3 +45,8 @@ action = "remove" # deletes resource from pack completely
 [[Resource]]
 name = "YOSBR"
 action = "ignore" # Shut up the warning
+
+[[Resource]]
+name = "Cull Less Leaves"
+action = "ignore"
+optional = true

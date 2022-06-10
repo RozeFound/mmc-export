@@ -18,7 +18,6 @@ class ResourceAPI(object):
 
     modrinth_search_type: str
     excluded_providers: list[str]
-    ignore_CF_flag: bool
 
     def __init__(self, session: CachedSession, intermediate: Intermediate) -> None:
 
@@ -39,7 +38,7 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.cache_directory = Path().home() / ".cache/mmc-export" / "v2"
+        self.cache_directory = Path().home() / ".cache/mmc-export" / "v5"
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
@@ -59,7 +58,7 @@ class ResourceAPI(object):
                     "id": None,
                     "version": "0.0.0"}
 
-            if path.suffix == ".jar":
+            if path.suffix in (".jar", ".disabled"):
                 with ZipFile(path) as modArchive:
                     filenames = [Path(file).name for file in modArchive.namelist()]
                     if "fabric.mod.json" in filenames:
@@ -134,6 +133,12 @@ class ResourceAPI_Batched(ResourceAPI):
     def queue_resource(self, path: Path) -> None:
 
         meta, resource = self._get_raw_info(path)
+        
+        if path.suffix == ".disabled": 
+            resource.optional = True
+            resource.file.path = path.replace(path.with_suffix(''))
+            resource.file.name = resource.file.path.name
+
         self.queue.append((meta, resource))
 
     async def gather(self) -> list[Resource]:
@@ -175,7 +180,6 @@ class ResourceAPI_Batched(ResourceAPI):
                     resource.links.append(addon['links']['websiteUrl'])
                     if srcUrl := addon['links']['sourceUrl']:
                         resource.links.append(srcUrl)
-                    if not self.ignore_CF_flag and not addon['allowModDistribution']: continue
 
                     resource.providers['CurseForge'] = Resource.Provider(
                         ID     = addon['id'],

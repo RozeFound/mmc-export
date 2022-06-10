@@ -22,6 +22,8 @@ class Modrinth(Writer):
             "fileSize": resource.file.path.stat().st_size
         }
 
+        if resource.optional: data['env'] = {"client": "optional", "server": "optional"}
+
         self.index['files'].append(data)
 
     def add_override(self, file: File) -> None:

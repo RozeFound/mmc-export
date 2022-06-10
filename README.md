@@ -46,7 +46,7 @@ It's recommended to fill config at least with basic info like name and version, 
 
 ## Syntax
 ```
-mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VERSION] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS] [--exclude-forbidden]
+mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VERSION] [--modrinth-search SEARCH_TYPE] [--exclude-providers PROVIDERS]
 ```
 
 ### Explanation
@@ -59,7 +59,6 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 -v --version: specify modpack version, will be overriden by config's value if exists
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
---exclude-forbidden: set to not ignore CF distribution flag. Must be enabled for public modpacks.
 ```
 > All paths can be relative to current working directory or absolute.
 
@@ -115,6 +114,9 @@ name = "ModName"
 filename = "the_name_of_the.jar" 
 action = "remove"
 ```
+
+#### To make mod optional you can append
+`optional=True` - to any of above
 
 # How to Install / Update
 ```

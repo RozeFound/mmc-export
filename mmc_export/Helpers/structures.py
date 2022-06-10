@@ -37,6 +37,7 @@ class Resource:
     
     name: str = field(default_factory=str)
     links: list[str] = field(default_factory=list)
+    optional: bool = False
 
     @dataclass
     class Provider:

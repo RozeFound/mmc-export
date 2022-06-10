@@ -43,12 +43,12 @@ class packwiz(Writer):
             }
 
             data['download'] = {
-                "url": provider.url,
-                "hash-format": "murmu2",
-                "hash": resource.file.hash.murmur2
+                "hash-format": "sha1",
+                "hash": resource.file.hash.sha1,
+                "mode": "metadata:curseforge"
             }
 
-        if provider := resource.providers.get("Modrinth"):
+        elif provider := resource.providers.get("Modrinth"):
 
             slug = provider.slug
 
@@ -57,23 +57,23 @@ class packwiz(Writer):
                 "version": provider.fileID
             }
 
-            if "download" not in data:
-                data['download'] = {
-                    "url": provider.url,
-                    "hash-format": "sha512",
-                    "hash": resource.file.hash.sha512
-                }
+            data['download'] = {
+                "url": provider.url,
+                "hash-format": "sha512",
+                "hash": resource.file.hash.sha512
+            }
 
-        if provider := resource.providers.get("Other"):
+        elif provider := resource.providers.get("Other"):
 
             slug = provider.slug
 
-            if "download" not in data:
-                data['download'] = {
-                    "url": provider.url,
-                    "hash-format": "sha256",
-                    "hash": resource.file.hash.sha256
-                }
+            data['download'] = {
+                "url": provider.url,
+                "hash-format": "sha256",
+                "hash": resource.file.hash.sha256
+            }
+
+        if resource.optional: data['option'] = {"optional": True}
 
         from werkzeug.utils import secure_filename
         if not slug: slug = secure_filename(resource.name)

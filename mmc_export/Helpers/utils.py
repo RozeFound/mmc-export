@@ -96,7 +96,6 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('-o', '--output', dest='output', type=Path, default=Path.cwd())
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=str())
-    arg_parser.add_argument('--exclude-forbidden', dest='ignore_CF_flag', action='store_false')
     arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
     arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
 
@@ -126,12 +125,9 @@ def parse_args() -> Namespace:
 
     return args
 
-def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidden: bool) -> None:
+def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
 
-    forbidden_domains = ("edge.forgecdn.net", "media.forgecdn.net")
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "gitlab.com", "github.com", "raw.githubusercontent.com")
-    if exclude_forbidden: allowed_domains = tuple(domain for domain in allowed_domains if domain not in forbidden_domains)
-    
     lost_resources = [res for res in intermediate.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
@@ -152,6 +148,9 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate, exclude_forbidd
 
         resource = next((x for x in intermediate.resources if name == x.name or filename == x.file.name), None)
         if not resource: continue
+
+        if resource_config.get("optional") is True:
+            resource.optional = True
 
         match resource_config.get("action"):
 

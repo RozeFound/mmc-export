@@ -19,7 +19,7 @@ class CurseForge(Writer):
             data = {
                 "projectID": provider.ID,
                 "fileID": provider.fileID,
-                "required": True
+                "required": not resource.optional
             }
 
             self.manifest['files'].append(data)

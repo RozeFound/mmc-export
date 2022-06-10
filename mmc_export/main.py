@@ -19,7 +19,6 @@ async def run():
 
     ResourceAPI.modrinth_search_type = args.modrinth_search
     ResourceAPI.excluded_providers = args.excluded_providers
-    ResourceAPI.ignore_CF_flag = args.ignore_CF_flag
 
     cache = FileBackend("mmc-export", use_temp=True, urls_expire_after={'*.jar': -1}, allowed_methods=("GET", "POST", "HEAD"))
     async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session: 
@@ -42,7 +41,7 @@ async def run():
         intermediate = await parser.parse()
         
         if version := args.modpack_version: intermediate.version = version
-        read_config_into(args.config, intermediate, not args.ignore_CF_flag)
+        read_config_into(args.config, intermediate)
         await resolve_conflicts(session, intermediate) # type: ignore
 
         for format in args.formats:
