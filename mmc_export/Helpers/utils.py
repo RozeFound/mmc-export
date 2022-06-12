@@ -1,25 +1,24 @@
-import asyncio
-import sys
-from argparse import SUPPRESS, ArgumentParser, Namespace
-from ctypes import ArgumentError
+import asyncio, sys, re
+from io import BytesIO
+from typing import Any
 from pathlib import Path
 from pprint import pformat
-from typing import IO, Any
 from urllib.parse import urlparse
 
 import keyring as secret_store
+from argparse import SUPPRESS, ArgumentParser, Namespace
 from aiohttp_client_cache.session import CachedSession
 from pytoml import loads as parse_toml
 
 from .structures import Intermediate, Resource
 
 
-def get_hash(file: Path | IO | bytes, hash_type: str = "sha256") -> str:
+def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
 
     if isinstance(file, Path): data = file.read_bytes()
-    elif isinstance(file, IO): data = file.read()
+    elif isinstance(file, BytesIO): data = file.read()
     elif isinstance(file, bytes): data = file
-    else: raise ArgumentError("Incorrect file type!")
+    else: raise TypeError("Incorrect file type!")
         
     from hashlib import sha1, sha256, sha512
 
@@ -31,12 +30,12 @@ def get_hash(file: Path | IO | bytes, hash_type: str = "sha256") -> str:
         case "sha256": hash = sha256(data).hexdigest()
         case "sha512": hash = sha512(data).hexdigest()
         case "xxhash": hash = xxh3_64_hexdigest(data)
-        case "murmur2": hash = murmur2(bytes([b for b in data if b not in (9, 10, 13, 32)]), seed=1)
-        case _: raise ArgumentError("Incorrect hash type!")
+        case "murmur2": hash = murmur2(re.sub(rb"[\x09\x0A\x0D\x20]", b"", data), seed=1)
+        case _: raise TypeError("Incorrect hash type!")
 
     return str(hash)
 
-def get_hashes(file: Path | IO | bytes, *args: str):
+def get_hashes(file: Path | BytesIO | bytes, *args: str):
     return [get_hash(file, hash_type) for hash_type in args]
 
 async def add_github_token(session: CachedSession) -> None:
@@ -199,10 +198,11 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
 
+
 import dataclasses, json
 class JsonEncoder(json.JSONEncoder):
 
-    def clean(self, value):
+    def clean(self, value) -> dict | list | Any:
         if isinstance(value, list): return [self.clean(x) for x in value if x]
         elif isinstance(value, dict): return {key: self.clean(val) for key, val in value.items() if val}
         else: return value
