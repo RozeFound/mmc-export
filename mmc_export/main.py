@@ -1,15 +1,15 @@
 from importlib import import_module
+from json import dump as write_json
 from pathlib import Path
 from shutil import rmtree
 
 from aiohttp import TCPConnector
 from aiohttp_client_cache.backends.filesystem import FileBackend
 from aiohttp_client_cache.session import CachedSession
-from json import dump as write_json
 
 from .Helpers.resourceAPI import ResourceAPI
-from .Helpers.utils import (add_github_token, parse_args, read_config_into,
-                            resolve_conflicts)
+from .Helpers.utils import (JsonEncoder, add_github_token, parse_args,
+                            read_config_into, resolve_conflicts)
 from .parser import Parser
 
 
@@ -48,7 +48,7 @@ async def run():
 
             if format == "Intermediate":
                 with open(args.output / "intermediate_output.json", "w") as file:
-                    write_json(intermediate.to_dict(), file, indent=4)
+                    write_json(intermediate, file, indent=4, cls=JsonEncoder)
                 continue
 
             module = import_module(f".Formats.{format.lower()}", "mmc_export")

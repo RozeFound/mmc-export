@@ -4,7 +4,7 @@ from argparse import SUPPRESS, ArgumentParser, Namespace
 from ctypes import ArgumentError
 from pathlib import Path
 from pprint import pformat
-from typing import IO
+from typing import IO, Any
 from urllib.parse import urlparse
 
 import keyring as secret_store
@@ -198,4 +198,21 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha1 = sha1
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
-            
+
+import dataclasses, json
+class JsonEncoder(json.JSONEncoder):
+
+    def clean(self, value):
+        if isinstance(value, list): return [self.clean(x) for x in value if x]
+        elif isinstance(value, dict): return {key: self.clean(val) for key, val in value.items() if val}
+        else: return value
+
+    def default(self, o: Any) -> Any:
+        
+        if dataclasses.is_dataclass(o):
+            data = dataclasses.asdict(o)
+            return self.clean(data)
+        if isinstance(o, Path):
+            return o.as_posix()
+
+        return super().default(o)
