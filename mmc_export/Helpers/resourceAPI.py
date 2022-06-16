@@ -12,6 +12,7 @@ from aiohttp_client_cache.session import CachedSession
 
 from .structures import Intermediate, Resource
 from .utils import delete_github_token, get_github_token, get_hash
+from .. import config
 
 
 class ResourceAPI(object):
@@ -24,13 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        # Not secure but not plain text either, just a compromise.
-
-        token = b'gAAAAABifAIMNFaSNF8epJIDWIv2nSe3zxARkMmViCa1ZCvtwoRqhuB1LYjjJsAstwTvP4dEOSm6Wj0SRDWr3PPwZz5eEBt_1fU8uIaninakGYFNSarEduD6YfoA-rm28qUQHYpVcuae3lj8sYrs_87P6F4s3gBrYg=='
-        key = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
-        from cryptography.fernet import Fernet
-
-        self.session.headers["X-Api-Key"] = Fernet(key).decrypt(token).decode()
+        self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
 
@@ -38,7 +33,7 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.cache_directory = Path().home() / ".cache/mmc-export" / "v5"
+        self.cache_directory = config.DEFAULT_CACHE_DIR / "v5"
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
@@ -221,30 +216,33 @@ class ResourceAPI_Batched(ResourceAPI):
         version_ids: list[str] = list()
         
         @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
-        async def get_project_id(meta: dict, resource: Resource) -> str | None:
+        async def get_project_id(meta: dict, resource: Resource):
             if self.modrinth_search_type == "loose":      
                 async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
-                    if response.status != 200 and response.status != 504 and response.status != 423: return
-                    if hits := (await response.json())['hits']: return hits[0]['project_id']
-            return meta['id']
+                    if response.status != 200 and response.status != 504 and response.status != 423: return resource, None
+                    if hits := (await response.json())['hits']: return resource, hits[0]['project_id']
+            return resource, meta['id']
 
         futures = (get_project_id(meta, resource) for meta, resource in search_queue)
-        project_ids = await asyncio.gather(*futures)
+        project_ids = {resource.name: id for resource, id in await asyncio.gather(*futures) if id}
         if not project_ids: return
 
         l2s = lambda l: "[{}]".format(",".join(map('"{}"'.format, l))) # list to string convesion
-        async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids)}") as response:
+        async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids.values())}") as response:
             if response.status != 200 and response.status != 504 and response.status != 423: return
-            for project in await response.json(): version_ids.extend(project['versions'])
+            for project in (projects := await response.json()): version_ids.extend(project['versions'])
 
-        if not version_ids: return
+            if not version_ids: return
 
-        async with self.session.get(f"{self.modrinth}/versions?ids={l2s(version_ids)}") as response:
-            if response.status != 200 and response.status != 504 and response.status != 423: return
-            versions = await response.json()
-            for meta, resource in search_queue:
-                for version in versions:
+            async with self.session.get(f"{self.modrinth}/versions?ids={l2s(version_ids)}") as response:
+                if response.status != 200 and response.status != 504 and response.status != 423: return
+                for project in projects: project['versions'] = [version for version in await response.json()
+                                                                if version['project_id'] == project['id']]
 
+        for meta, resource in search_queue:
+            if project := next((project for project in projects 
+                if project['id'] == project_ids.get(resource.name, "Get out of here")), None):
+                for version in project['versions']:
                     if meta['version'] in version['version_number'] \
                         and self.intermediate.minecraft_version in version['game_versions'] \
                         and self.intermediate.modloader.type in version['loaders']:

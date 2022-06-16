@@ -11,6 +11,7 @@ from .Helpers.resourceAPI import ResourceAPI
 from .Helpers.utils import (JsonEncoder, add_github_token, parse_args,
                             read_config_into, resolve_conflicts)
 from .parser import Parser
+from . import config
 
 
 async def run():
@@ -30,11 +31,8 @@ async def run():
                 url = "https://github.com/settings/connections/applications/8011f22f502b091464de"
                 print(f"You can revoke your access token by the following link: \n{url}"); return
             case "purge-cache":
-                if args.cache_web or args.cache_all: 
-                    await session.cache.clear() # type: ignore
-                if args.cache_files or args.cache_all: 
-                    cache_directory = Path().home() / ".cache/mmc-export"
-                    rmtree(cache_directory, ignore_errors=True)
+                if args.cache_web or args.cache_all: await session.cache.clear() # type: ignore
+                if args.cache_files or args.cache_all: rmtree(config.DEFAULT_CACHE_DIR, ignore_errors=True)
                 return
 
         parser = Parser(args.input, session) # type: ignore
@@ -60,8 +58,7 @@ async def run():
     return 0
 
 def main():
-    import asyncio
-    import sys
+    import asyncio, sys
     if sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
                 
