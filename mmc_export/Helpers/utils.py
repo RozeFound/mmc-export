@@ -71,7 +71,7 @@ async def add_github_token(session: CachedSession) -> None:
 
                 if token := data.get('access_token'):
                     secret_store.set_password("mmc-export", "github-token", token)
-                    print("Succsesfully authorized!")
+                    print("Successfully authorized!")
                     return
 
 def delete_github_token() -> None:
