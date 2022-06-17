@@ -114,10 +114,9 @@ name = "ModName"
 filename = "the_name_of_the.jar" 
 action = "remove"
 ```
-
 #### To make mod optional you can append
 `optional = true` - to any of above
-
+> Also specifying both name and filename is optional but recommended, you can always leave only one of these
 # How to Install / Update
 ```
 pip install -U mmc-export
