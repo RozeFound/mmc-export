@@ -72,7 +72,8 @@ class ResourceAPI(object):
             resource.file.hash.sha512 = get_hash(file_data, "sha512")
             resource.file.hash.murmur2 = get_hash(file_data, "murmur2")
 
-            data = serialize((meta, resource), HIGHEST_PROTOCOL)
+            to_cache = meta, resource
+            data = serialize(to_cache, HIGHEST_PROTOCOL)
             cache_file.write_bytes(data)
 
         resource.file.path = path
@@ -267,8 +268,7 @@ class ResourceAPI_Batched(ResourceAPI):
         if "GitHub" in self.excluded_providers: return
         
         if not self.session.headers.get('Authorization'):
-            if token := get_github_token():
-                self.session.headers['Authorization'] = f"Bearer {token}"
+            if token := get_github_token(): self.session.headers['Authorization'] = f"Bearer {token}"
             else: 
                 futures = [self._get_github(meta, resource) for meta, resource in self.queue]
                 await asyncio.gather(*futures)
@@ -276,11 +276,11 @@ class ResourceAPI_Batched(ResourceAPI):
                 async with self.session.disabled():
                     async with self.session.get("https://api.github.com/rate_limit") as response:
                         ratelimit = (await response.json())['resources']['core']
-                        time_remaining = datetime.fromtimestamp(float(ratelimit['reset'])).strftime("%H:%M")
+                        time_remaining = datetime.fromtimestamp(float(ratelimit['reset']))
                         if ratelimit['remaining'] == 0: 
                             print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
-                            print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining}")
-                    return
+                            print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining:%H:%M}")
+                return
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
@@ -304,8 +304,7 @@ class ResourceAPI_Batched(ResourceAPI):
         queries: list[str] = list()
         
         for repo in repositories:
-            query = GqlQuery() \
-                .fields(['...repoReleaseAssets']) \
+            query = GqlQuery().fields(['...repoReleaseAssets']) \
                 .query('repository', alias=repo.alias, input={"name": f'"{repo.name}"', "owner": f'"{repo.owner}"'}) \
                 .generate()
             queries.append(query)

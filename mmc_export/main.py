@@ -1,6 +1,5 @@
 from importlib import import_module
 from json import dump as write_json
-from pathlib import Path
 from shutil import rmtree
 
 from aiohttp import TCPConnector
@@ -14,7 +13,7 @@ from .parser import Parser
 from . import config
 
 
-async def run():
+async def program():
 
     args = parse_args()
 
@@ -60,10 +59,9 @@ async def run():
 def main():
     import asyncio, sys
     if sys.platform.startswith("win"):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore
+        policy = asyncio.WindowsSelectorEventLoopPolicy()
+        asyncio.set_event_loop_policy(policy)
                 
-    try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(run())
+    try: asyncio.run(program())
     except KeyboardInterrupt: 
         print("Operation aborted by user.")

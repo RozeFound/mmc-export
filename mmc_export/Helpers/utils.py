@@ -21,7 +21,6 @@ def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
     else: raise TypeError("Incorrect file type!")
         
     from hashlib import sha1, sha256, sha512
-
     from murmurhash2 import murmurhash2 as murmur2
     from xxhash import xxh3_64_hexdigest
 
@@ -30,10 +29,12 @@ def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
         case "sha256": hash = sha256(data).hexdigest()
         case "sha512": hash = sha512(data).hexdigest()
         case "xxhash": hash = xxh3_64_hexdigest(data)
-        case "murmur2": hash = murmur2(re.sub(rb"[\x09\x0A\x0D\x20]", b"", data), seed=1)
+        case "murmur2": 
+            data = re.sub(rb"[\x09\x0A\x0D\x20]", b"", data)
+            hash = str(murmur2(data, seed=1))
         case _: raise TypeError("Incorrect hash type!")
 
-    return str(hash)
+    return hash
 
 def get_hashes(file: Path | BytesIO | bytes, *args: str):
     return [get_hash(file, hash_type) for hash_type in args]
@@ -94,7 +95,7 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('-f', '--format', dest='formats', type=str, nargs="+", choices=formats)
     arg_parser.add_argument('-o', '--output', dest='output', type=Path, default=Path.cwd())
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
-    arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=str())
+    arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=[])
     arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
     arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
 
@@ -111,10 +112,12 @@ def parse_args() -> Namespace:
 
     if args.help: 
         print("mmc-export: Export MMC modpack to other modpack formats")
-        print("Usage examples you can find here: https://github.com/RozeFound/mmc-export#how-to-use")
+        print("Usage example you can find here: https://github.com/RozeFound/mmc-export#how-to-use")
 
     if args.cmd and args.cmd == "purge-cache":
-        if not args.cache_web or not args.cache_files or not args.cache_all:
+        if not args.cache_web \
+            or not args.cache_files \
+            or not args.cache_all:
             args.cache_all = True
 
     if not args.cmd:
