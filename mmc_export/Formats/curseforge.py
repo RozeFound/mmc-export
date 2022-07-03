@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ..Helpers.structures import File, Intermediate, Resource, Writer
+from ..Helpers.utils import get_name_from_scheme
 
 
 class CurseForge(Writer):
@@ -83,5 +84,5 @@ class CurseForge(Writer):
             file.writelines(self.modlist)
 
         from shutil import make_archive
-        base = self.modpack_path / ("CF_" + self.intermediate.name)
-        make_archive(base.as_posix(), 'zip', self.temp_dir, '.')
+        name = get_name_from_scheme("CF", "CurseForge", self.intermediate.name, self.intermediate.version)
+        make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.')

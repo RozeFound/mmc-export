@@ -10,6 +10,7 @@ from argparse import SUPPRESS, ArgumentParser, Namespace
 from aiohttp_client_cache.session import CachedSession
 from pytoml import loads as parse_toml
 
+from .. import config
 from .structures import Intermediate, Resource
 
 
@@ -98,6 +99,7 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=[])
     arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
     arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
+    arg_parser.add_argument('--scheme', dest='scheme', type=str)
 
     arg_subs = arg_parser.add_subparsers(dest='cmd')
     arg_subs.add_parser('gh-login', add_help=False)
@@ -113,6 +115,17 @@ def parse_args() -> Namespace:
     if args.help: 
         print("mmc-export: Export MMC modpack to other modpack formats")
         print("Usage example you can find here: https://github.com/RozeFound/mmc-export#how-to-use")
+
+    if args.scheme: 
+        old_scheme = config.output_naming_scheme
+        config.output_naming_scheme = args.scheme
+        try: get_name_from_scheme("PRAB", "FormatName", "ModpackName", "0.0.0")
+        except KeyError as e:
+            print("Found an error(s) in naming scheme!")
+            for arg in e.args: print(f"Keyword {arg} doesn't exists")
+            print("Please, recheck your scheme.")
+            print("Default will be used for this run.")
+            config.output_naming_scheme = old_scheme
 
     if args.cmd and args.cmd == "purge-cache":
         if not args.cache_web \
@@ -200,6 +213,9 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha1 = sha1
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
+
+def get_name_from_scheme(abbr: str, format: str, name: str, version: str) -> str:
+    return config.output_naming_scheme.format(abbr=abbr, format=format, name=name, version=version)
 
 
 import dataclasses, json

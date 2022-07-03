@@ -3,7 +3,7 @@ from pathlib import Path
 from pytoml import dump as write_toml
 
 from ..Helpers.structures import File, Intermediate, Resource, Writer
-from ..Helpers.utils import get_hash
+from ..Helpers.utils import get_hash, get_name_from_scheme
 
 
 class packwiz(Writer):
@@ -140,5 +140,5 @@ class packwiz(Writer):
             write_toml(self.pack_info, file)
 
         from shutil import make_archive
-        base = self.modpack_path / ("PW_" + self.intermediate.name)
-        make_archive(base.as_posix(), 'zip', self.temp_dir, '.')
+        name = get_name_from_scheme("PW", "Packwiz", self.intermediate.name, self.intermediate.version)
+        make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.')

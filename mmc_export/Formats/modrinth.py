@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ..Helpers.structures import File, Intermediate, Resource, Writer
+from ..Helpers.utils import get_name_from_scheme
 
 
 class Modrinth(Writer):
@@ -112,6 +113,6 @@ class Modrinth(Writer):
             write_json(self.index, file, indent=4)
 
         from shutil import make_archive
-        base = self.modpack_path / ("MR_" + self.intermediate.name)
-        archive = Path(make_archive(base.as_posix(), 'zip', self.temp_dir, '.'))
+        name = get_name_from_scheme("MR", "Modrinth", self.intermediate.name, self.intermediate.version)
+        archive = Path(make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.'))
         archive.replace(archive.with_suffix(".mrpack"))

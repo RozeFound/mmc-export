@@ -59,7 +59,7 @@ async def program():
 def main():
     import asyncio, sys
     if sys.platform.startswith("win"):
-        policy = asyncio.WindowsSelectorEventLoopPolicy()
+        policy = asyncio.WindowsSelectorEventLoopPolicy()  # type: ignore
         asyncio.set_event_loop_policy(policy)
                 
     try: asyncio.run(program())

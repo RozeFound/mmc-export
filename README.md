@@ -59,6 +59,8 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 -v --version: specify modpack version, will be overriden by config's value if exists
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
+--skip-cache: don't use web cache in this run
+--scheme: output filename formatting scheme, more info in #scheme-formatting
 ```
 > All paths can be relative to current working directory or absolute.
 
@@ -116,7 +118,24 @@ action = "remove"
 ```
 #### To make mod optional you can append
 `optional = true` - to any of above
+
 > Also specifying both name and filename is optional but recommended, you can always leave only one of these
+
+## Scheme Formatting
+
+Must be used as `--scheme "{keyword}_Literally any text"` without file extension, follows python's [format string syntax](https://docs.python.org/3/library/string.html#format-string-syntax)
+
+#### Available keywords: 
+- `abbr` - provider abbreviation, usually 2 capitals, e.g. `MR`, `CF`
+- `format` - full format name, e.g. `CurseForge`, `Packwiz`
+- `name` - modpack name
+- `version` - modpack version
+
+Default scheme is as simple as `{abbr}_{name}`
+
+***Caution: if you don't use any format specifc keywords, output files will overwrite the same file several times***, can be ignored if you output to only one format.
+Also, be aware of your filesystem limitations, unsupported characters may lead to an error, or inaccesible file.
+
 # How to Install / Update
 ```
 pip install -U mmc-export

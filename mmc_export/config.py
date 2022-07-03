@@ -6,3 +6,4 @@ key = b'ywE5qRot_nuWfLnbEXXcAPKaW10us3YpWEkDXgm9was='
 
 CURSEFORGE_API_TOKEN = Fernet(key).decrypt(token).decode()
 DEFAULT_CACHE_DIR = Path().home() / ".cache/mmc-export"
+output_naming_scheme = "{abbr}_{name}"
