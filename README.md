@@ -1,5 +1,5 @@
 # MultiMC advanced exporter
-![PyPI pyversions](https://img.shields.io/pypi/pyversions/mmc-export)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/mmc-export)](https://www.python.org)
 [![PyPI version](https://img.shields.io/pypi/v/mmc-export?label=mmc-export&color=%2347a637)](https://pypi.org/project/mmc-export)
 [![PyPI downloads](https://img.shields.io/pypi/dm/mmc-export?color=%23894bbf)](https://pypistats.org/packages/mmc-export)
 [![GitHub license](https://img.shields.io/github/license/RozeFound/mmc-export)](/LICENSE)
