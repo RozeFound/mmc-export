@@ -84,5 +84,5 @@ class CurseForge(Writer):
             file.writelines(self.modlist)
 
         from shutil import make_archive
-        name = get_name_from_scheme("CF", "CurseForge", self.intermediate.name, self.intermediate.version)
+        name = get_name_from_scheme("CF", "CurseForge", self.intermediate)
         make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.')

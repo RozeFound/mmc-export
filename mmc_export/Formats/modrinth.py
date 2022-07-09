@@ -113,6 +113,6 @@ class Modrinth(Writer):
             write_json(self.index, file, indent=4)
 
         from shutil import make_archive
-        name = get_name_from_scheme("MR", "Modrinth", self.intermediate.name, self.intermediate.version)
+        name = get_name_from_scheme("MR", "Modrinth", self.intermediate)
         archive = Path(make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.'))
         archive.replace(archive.with_suffix(".mrpack"))

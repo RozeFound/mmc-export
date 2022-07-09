@@ -140,5 +140,5 @@ class packwiz(Writer):
             write_toml(self.pack_info, file)
 
         from shutil import make_archive
-        name = get_name_from_scheme("PW", "Packwiz", self.intermediate.name, self.intermediate.version)
+        name = get_name_from_scheme("PW", "Packwiz", self.intermediate)
         make_archive((self.modpack_path / name).as_posix(), 'zip', self.temp_dir, '.')

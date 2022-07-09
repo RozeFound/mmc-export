@@ -119,7 +119,7 @@ def parse_args() -> Namespace:
     if args.scheme: 
         old_scheme = config.output_naming_scheme
         config.output_naming_scheme = args.scheme
-        try: get_name_from_scheme("PRAB", "FormatName", "ModpackName", "0.0.0")
+        try: get_name_from_scheme("PRAB", "FormatName", Intermediate("ModpackName", version="0.0.0"))
         except KeyError as e:
             print("Found an error(s) in naming scheme!")
             for arg in e.args: print(f"Keyword {arg} doesn't exists")
@@ -214,8 +214,8 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
 
-def get_name_from_scheme(abbr: str, format: str, name: str, version: str) -> str:
-    return config.output_naming_scheme.format(abbr=abbr, format=format, name=name, version=version)
+def get_name_from_scheme(abbr: str, format: str, pack: Intermediate) -> str:
+    return config.output_naming_scheme.format(abbr=abbr, format=format, name=pack.name, version=pack.version, pack=pack)
 
 
 import dataclasses, json

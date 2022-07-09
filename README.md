@@ -128,8 +128,9 @@ Must be used as `--scheme "{keyword}_Literally any text"` without file extension
 #### Available keywords: 
 - `abbr` - provider abbreviation, usually 2 capitals, e.g. `MR`, `CF`
 - `format` - full format name, e.g. `CurseForge`, `Packwiz`
-- `name` - modpack name
-- `version` - modpack version
+- `name` same as `pack.name` - modpack name
+- `version` same as `pack.version` - modpack version
+- `pack` - pointer to [Intermediate](mmc_export/Helpers/structures.py#L49-L65) structure
 
 Default scheme is as simple as `{abbr}_{name}`
 
