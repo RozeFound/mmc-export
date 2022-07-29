@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.5.1"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.5.2"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -241,13 +241,15 @@ class ResourceAPI_Batched(ResourceAPI):
                 for project in projects: project['versions'] = [version for version in await response.json()
                                                                 if version['project_id'] == project['id']]
 
+        minecraft_major_version = ".".join(self.intermediate.minecraft_version.split(".")[:2])
+
         for meta, resource in search_queue:
             if project := next((project for project in projects 
-                if project['id'] == project_ids.get(resource.name, "Get out of here")), None):
+            if project['id'] == project_ids.get(resource.name, "")), None):
                 for version in project['versions']:
                     if meta['version'] in version['version_number'] \
-                        and self.intermediate.minecraft_version in version['game_versions'] \
-                        and self.intermediate.modloader.type in version['loaders']:
+                    and minecraft_major_version in version['game_versions'] \
+                    and self.intermediate.modloader.type in version['loaders']:
 
                         file = next(file for file in version['files'] 
                             if file['filename'] == resource.file.name or file['primary'])
