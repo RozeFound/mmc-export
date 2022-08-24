@@ -17,6 +17,7 @@ class File:
         murmur2: str = field(default_factory=str)
 
     hash: Hash = field(default_factory=Hash)
+    size: int = field(default_factory=int)
 
     path: Path = field(default_factory=Path)
     relativePath: str = field(default_factory=str)

@@ -206,9 +206,12 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
             cloud_file = next(file for url, file in files if url == provider.url)
             sha1, sha256, sha512 = get_hashes(cloud_file, "sha1", "sha256", "sha512")
             if "Modrinth" in resource.providers:
-                if resource.file.hash.sha1 != sha1 or resource.file.hash.sha512 != sha512:
+                if resource.file.hash.sha1 != sha1 \
+                or resource.file.hash.sha512 != sha512 \
+                or resource.file.size != (size := len(cloud_file)):
                     resource.providers.pop("Other")
             else: 
+                resource.file.size = size
                 resource.file.hash.sha1 = sha1
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 

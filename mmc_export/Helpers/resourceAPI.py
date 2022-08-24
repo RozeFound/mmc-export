@@ -34,7 +34,7 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.cache_directory = config.DEFAULT_CACHE_DIR / "v5"
+        self.cache_directory = config.DEFAULT_CACHE_DIR / "v6"
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
@@ -72,6 +72,8 @@ class ResourceAPI(object):
             resource.file.hash.sha256 = get_hash(file_data, "sha256")
             resource.file.hash.sha512 = get_hash(file_data, "sha512")
             resource.file.hash.murmur2 = get_hash(file_data, "murmur2")
+
+            resource.file.size = path.stat().st_size
 
             to_cache = meta, resource
             data = serialize(to_cache, HIGHEST_PROTOCOL)
@@ -263,6 +265,7 @@ class ResourceAPI_Batched(ResourceAPI):
 
                         resource.file.hash.sha1 = file['hashes']['sha1']
                         resource.file.hash.sha512 = file['hashes']['sha512']
+                        resource.file.size = file['size']
 
                         break
 
