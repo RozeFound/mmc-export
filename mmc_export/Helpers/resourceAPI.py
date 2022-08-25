@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.5.4"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.5.5"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -222,7 +222,7 @@ class ResourceAPI_Batched(ResourceAPI):
         @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
         async def get_project_id(meta: dict, resource: Resource):
             if self.modrinth_search_type == "loose":      
-                async with self.session.get(f"{self.modrinth}/search?query={resource.name}") as response: 
+                async with self.session.get(f"{self.modrinth}/search?query={resource.name}&limit=1") as response: 
                     if response.status != 200 and response.status != 504 and response.status != 423: return resource, None
                     if hits := (await response.json())['hits']: return resource, hits[0]['project_id']
             return resource, meta['id']
