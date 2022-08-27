@@ -203,16 +203,12 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
 
     for resource in intermediate.resources:
         if provider := resource.providers.get('Other'):
-            cloud_file = BytesIO(next(file for url, file in files if url == provider.url))
+            cloud_file = next(file for url, file in files if url == provider.url)
             sha1, sha256, sha512 = get_hashes(cloud_file, "sha1", "sha256", "sha512")
-            size = cloud_file.tell()
             if "Modrinth" in resource.providers:
-                if resource.file.hash.sha1 != sha1 \
-                or resource.file.hash.sha512 != sha512 \
-                or resource.file.size != size:
+                if resource.file.hash.sha1 != sha1 or resource.file.hash.sha512 != sha512:
                     resource.providers.pop("Other")
             else: 
-                resource.file.size = size
                 resource.file.hash.sha1 = sha1
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
