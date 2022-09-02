@@ -1,4 +1,5 @@
 import asyncio, sys, re
+import tenacity as tn
 from io import BytesIO
 from typing import Any
 from pathlib import Path
@@ -192,9 +193,9 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
         
 async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> None: 
 
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def download_file(url: str) -> tuple[str, bytes]:
         async with session.get(url) as response:
-            assert response.status == 200
             return url, await response.read()
 
     futures = [download_file(r.providers['Other'].url) for r 
@@ -212,6 +213,7 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha1 = sha1
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
+                resource.file.size = len(cloud_file)
 
 def get_name_from_scheme(abbr: str, format: str, pack: Intermediate) -> str:
     return config.output_naming_scheme.format(abbr=abbr, format=format, name=pack.name, version=pack.version, pack=pack)
