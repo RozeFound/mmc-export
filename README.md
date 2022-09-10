@@ -53,7 +53,7 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 ```
 -h --help: prints help
 -i --input: path to modpack, must be zip file exported from MultiMC.
--c --config: path to config, used to fill the gaps like description or losted mods.
+-c --config: path to config, used to fill the gaps like description or missing mods.
 -f --format: output formats, must be separated by spaces.
 -o --output: directory where converted zip files will be stored.
 -v --version: specify modpack version, will be overriden by config's value if exists
