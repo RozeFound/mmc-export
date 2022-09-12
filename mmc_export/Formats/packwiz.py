@@ -78,7 +78,7 @@ class packwiz(Writer):
         from werkzeug.utils import secure_filename
         if not slug: slug = secure_filename(resource.name)
 
-        toml_path = self.temp_dir / resource.file.relativePath / (slug + ".toml")
+        toml_path = self.temp_dir / resource.file.relativePath / (slug + ".pw.toml")
         toml_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(toml_path, "w") as file:
