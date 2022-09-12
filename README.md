@@ -59,6 +59,7 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 -v --version: specify modpack version, will be overriden by config's value if exists
 --modrinth-search: modrinth search accuracy
 --exclude-providers: providers you wish to exclude from search
+--provider-priority: providers priority used for packwiz
 --skip-cache: don't use web cache in this run
 --scheme: output filename formatting scheme, more info in #scheme-formatting
 ```
@@ -74,6 +75,11 @@ mmc-export [sub-command] [-h] [-c CONFIG] -i INPUT -f FORMAT [-o OUTPUT] [-v VER
 - `CurseForge`
 - `Modrinth`
 - `GitHub`
+
+`--provider-priority` options (case-sensitive): 
+- `CurseForge`
+- `Modrinth`
+- `Other` or `GitHub`
 
 `--modrinth-search` options:
 - `exact` - by hash (default)

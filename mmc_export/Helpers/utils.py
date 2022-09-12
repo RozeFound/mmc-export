@@ -87,7 +87,7 @@ def parse_args() -> Namespace:
 
     formats = ('packwiz', 'Modrinth', 'CurseForge', 'Intermediate')
     mr_search = ('exact', 'accurate', 'loose')
-    providers = ('GitHub', 'CurseForge', 'Modrinth')
+    providers = ('GitHub', 'CurseForge', 'Modrinth', 'Other')
  
     arg_parser = ArgumentParser(usage=SUPPRESS, add_help=False)
     arg_parser.add_argument('-h', '--help', dest="help", action='store_true')
@@ -97,6 +97,7 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('-o', '--output', dest='output', type=Path, default=Path.cwd())
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=[])
+    arg_parser.add_argument('--provider-priority', dest="providers_priority", type=str, nargs="+", choices=providers)
     arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
     arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
     arg_parser.add_argument('--scheme', dest='scheme', type=str)
@@ -126,6 +127,17 @@ def parse_args() -> Namespace:
             print("Please, recheck your scheme.")
             print("Default will be used for this run.")
             config.output_naming_scheme = old_scheme
+
+    if priority := args.providers_priority:
+
+        if "GitHub" in priority: 
+            gh_id = priority.index("GitHub"); priority.pop(gh_id)
+            if "Other" not in priority: priority.insert(gh_id, "Other")
+
+        if len(set(priority)) < len(config.providers_priority):
+            print("You must specify ALL providers in providers priority!")
+            print("Default priority will be used for this run.")
+        else: config.providers_priority = tuple(priority)
 
     if args.cmd and args.cmd == "purge-cache":
         if not args.cache_web \

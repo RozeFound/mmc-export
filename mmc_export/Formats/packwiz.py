@@ -4,6 +4,7 @@ from pytoml import dump as write_toml
 
 from ..Helpers.structures import File, Intermediate, Resource, Writer
 from ..Helpers.utils import get_hash, get_name_from_scheme
+from .. import config
 
 
 class packwiz(Writer):
@@ -32,46 +33,54 @@ class packwiz(Writer):
 
         slug = None
 
-        if provider := resource.providers.get("CurseForge"):
+        for prior in config.providers_priority:  
 
-            slug = provider.slug
-            
-            data['update']['curseforge'] = {
-                "file-id": provider.fileID,
-                "project-id": provider.ID,
-                "release-channel": "beta"
-            }
+            if prior == "CurseForge" and (provider := resource.providers.get("CurseForge")):
 
-            data['download'] = {
-                "hash-format": "sha1",
-                "hash": resource.file.hash.sha1,
-                "mode": "metadata:curseforge"
-            }
+                slug = provider.slug
+                
+                data['update']['curseforge'] = {
+                    "file-id": provider.fileID,
+                    "project-id": provider.ID,
+                    "release-channel": "beta"
+                }
 
-        elif provider := resource.providers.get("Modrinth"):
+                data['download'] = {
+                    "hash-format": "sha1",
+                    "hash": resource.file.hash.sha1,
+                    "mode": "metadata:curseforge"
+                }
 
-            slug = provider.slug
+                break
 
-            data['update']['modrinth'] = {
-                "mod-id": provider.ID,
-                "version": provider.fileID
-            }
+            if  prior == "Modrinth" and (provider := resource.providers.get("Modrinth")):
 
-            data['download'] = {
-                "url": provider.url,
-                "hash-format": "sha512",
-                "hash": resource.file.hash.sha512
-            }
+                slug = provider.slug
 
-        elif provider := resource.providers.get("Other"):
+                data['update']['modrinth'] = {
+                    "mod-id": provider.ID,
+                    "version": provider.fileID
+                }
 
-            slug = provider.slug
+                data['download'] = {
+                    "url": provider.url,
+                    "hash-format": "sha512",
+                    "hash": resource.file.hash.sha512
+                }
 
-            data['download'] = {
-                "url": provider.url,
-                "hash-format": "sha256",
-                "hash": resource.file.hash.sha256
-            }
+                break
+
+            if prior == "Other" and (provider := resource.providers.get("Other")):
+
+                slug = provider.slug
+
+                data['download'] = {
+                    "url": provider.url,
+                    "hash-format": "sha256",
+                    "hash": resource.file.hash.sha256
+                }
+
+                break
 
         if resource.optional: data['option'] = {"optional": True}
 

@@ -12,3 +12,4 @@ CACHE_HOME = environ.get("XDG_CACHE_HOME", Path().home() / ".cache")
 DEFAULT_CACHE_DIR = Path(CACHE_HOME) / "mmc-export"
 
 output_naming_scheme = "{abbr}_{name}"
+providers_priority = ("CurseForge", "Modrinth", "Other")
