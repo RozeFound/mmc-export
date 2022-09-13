@@ -1,6 +1,8 @@
+from contextlib import suppress
 from pathlib import Path
 
-from pytoml import dump as write_toml
+from tomli_w import dump as write_toml
+from tomli_w import dumps as encode_toml
 
 from ..Helpers.structures import File, Intermediate, Resource, Writer
 from ..Helpers.utils import get_hash, get_name_from_scheme
@@ -27,7 +29,9 @@ class packwiz(Writer):
         data = {
             "name": resource.name,
             "filename": resource.file.name,
+            "side": "both",
 
+            "download": {},
             "update": {}
         }
 
@@ -91,7 +95,14 @@ class packwiz(Writer):
         toml_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(toml_path, "w") as file:
-            write_toml(data, file)
+
+            toml_data = encode_toml(data)
+
+            with suppress(ValueError): 
+                index = toml_data.index("[update")
+                toml_data = toml_data[:index] + "[update]\n" + toml_data[index:]
+
+            file.write(toml_data)
 
         index_data = {
             "file": toml_path.relative_to(self.temp_dir).as_posix(),
@@ -110,7 +121,7 @@ class packwiz(Writer):
         copy_file(file.path, file_path)
 
         data = {
-            "file": Path(file.relativePath) / file.name,
+            "file": Path(file.relativePath).joinpath(file.name).as_posix(),
             "hash": file.hash.sha256
         }
         
@@ -125,13 +136,14 @@ class packwiz(Writer):
             self.add_resource(resource)
 
         index_path = self.temp_dir / "index.toml"
-        with open(index_path, "w") as file:
+        with open(index_path, "wb") as file:
             write_toml(self.index, file)
 
         self.pack_info = {
             "name": self.intermediate.name,
             "author": self.intermediate.author,
             "version": self.intermediate.version,
+            "pack-format": "packwiz:1.1.0",
 
             "index": {
                 "file": "index.toml",
@@ -145,7 +157,7 @@ class packwiz(Writer):
             }
         }
 
-        with open(self.temp_dir / "pack.toml", "w") as file:
+        with open(self.temp_dir / "pack.toml", "wb") as file:
             write_toml(self.pack_info, file)
 
         from shutil import make_archive

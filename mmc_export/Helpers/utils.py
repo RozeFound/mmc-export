@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import keyring as secret_store
 from argparse import SUPPRESS, ArgumentParser, Namespace
 from aiohttp_client_cache.session import CachedSession
-from pytoml import loads as parse_toml
+from tomli import loads as parse_toml
 
 from .. import config
 from .structures import Intermediate, Resource
