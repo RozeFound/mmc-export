@@ -27,7 +27,7 @@ async def program():
         match args.cmd:
             case "gh-login": await add_github_token(session); return # type: ignore
             case "gh-logout": 
-                url = "https://github.com/settings/connections/applications/8011f22f502b091464de"
+                url = f"https://github.com/settings/connections/applications/{config.OAUTH_GITHUB_CLIENT_ID}"
                 print(f"You can revoke your access token by the following link: \n{url}"); return
             case "purge-cache":
                 if args.cache_web or args.cache_all: await session.cache.clear() # type: ignore
