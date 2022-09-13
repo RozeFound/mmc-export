@@ -96,9 +96,10 @@ class packwiz(Writer):
 
         with open(toml_path, "w") as file:
 
+            if not data['update']: del data['update']
             toml_data = encode_toml(data)
 
-            with suppress(ValueError): 
+            with suppress(ValueError):
                 index = toml_data.index("[update")
                 toml_data = toml_data[:index] + "[update]\n" + toml_data[index:]
 
