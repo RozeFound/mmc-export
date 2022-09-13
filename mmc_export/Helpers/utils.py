@@ -187,7 +187,9 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
                 elif urlparse(url).netloc not in allowed_domains:
                     print(f"Failed to read config for {resource.name}, wrong url domain!")
                     print(f"Allowed domains: {pformat(allowed_domains)}")
-                else: resource.providers['Other'] = Resource.Provider(url = url)
+                else: 
+                    resource.providers.clear()
+                    resource.providers['Other'] = Resource.Provider(url = url)
 
             case "remove": 
                 intermediate.resources.remove(resource)
