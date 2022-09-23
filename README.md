@@ -122,8 +122,16 @@ name = "ModName"
 filename = "the_name_of_the.jar" 
 action = "remove"
 ```
-#### To make mod optional you can append
-`optional = true` - to any of above
+#### Make the mod optional
+Append `optional = true` to any of above
+
+#### Delete any file
+This can be defined to delete any file that isn't downloadable from CurseForge/Modrinth, e.g. mod config or metadata file.
+```
+[[File]]
+name = "Useless file.txt"
+action = "remove"
+```
 
 > Also specifying both name and filename is optional but recommended, you can always leave only one of these
 
