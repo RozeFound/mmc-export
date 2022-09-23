@@ -50,3 +50,8 @@ action = "ignore" # Shut up the warning
 name = "Cull Less Leaves"
 action = "ignore"
 optional = true
+
+[[File]]
+name = "This file is useless.txt.or.not.txt.you can even leave it without extension"
+action = "remove" # Only one action is available for files anyway
+# The name is just a filename. What else did you expect?

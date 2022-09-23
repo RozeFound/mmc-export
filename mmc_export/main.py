@@ -8,7 +8,7 @@ from aiohttp_client_cache.session import CachedSession
 
 from .Helpers.resourceAPI import ResourceAPI
 from .Helpers.utils import (JsonEncoder, add_github_token, parse_args,
-                            read_config_into, resolve_conflicts)
+                            parse_config, resolve_conflicts)
 from .parser import Parser
 from . import config
 
@@ -38,8 +38,8 @@ async def program():
         intermediate = await parser.parse()
         
         if version := args.modpack_version: intermediate.version = version
-        read_config_into(args.config, intermediate)
-        await resolve_conflicts(session, intermediate) # type: ignore
+        intermediate = parse_config(args.config, intermediate)
+        intermediate = await resolve_conflicts(session, intermediate) # type: ignore
 
         for format in args.formats:
 

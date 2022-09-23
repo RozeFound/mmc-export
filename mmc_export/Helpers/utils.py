@@ -1,4 +1,5 @@
 import asyncio, sys, re
+from copy import deepcopy
 import tenacity as tn
 from io import BytesIO
 from typing import Any
@@ -152,20 +153,22 @@ def parse_args() -> Namespace:
 
     return args
 
-def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
+def parse_config(cfg_path: Path, intermediate: Intermediate) -> Intermediate:
+
+    _intermediate = deepcopy(intermediate)
 
     allowed_domains = ("cdn.modrinth.com", "edge.forgecdn.net", "media.forgecdn.net", "gitlab.com", "github.com", "raw.githubusercontent.com")
-    lost_resources = [res for res in intermediate.resources if not res.providers]
+    lost_resources = [res for res in _intermediate.resources if not res.providers]
 
     if cfg_path is not None and cfg_path.exists():
         config = parse_toml(cfg_path.read_text())
     else: config = {}
 
-    intermediate.name = config.get('name', intermediate.name)
-    intermediate.author = config.get('author', intermediate.author)
-    intermediate.version = config.get('version', intermediate.version)
-    intermediate.description = config.get('description', intermediate.description)
-    if not intermediate.version: intermediate.version = input("Specify modpack version: ")
+    _intermediate.name = config.get('name', _intermediate.name)
+    _intermediate.author = config.get('author', _intermediate.author)
+    _intermediate.version = config.get('version', _intermediate.version)
+    _intermediate.description = config.get('description', _intermediate.description)
+    if not _intermediate.version: _intermediate.version = input("Specify modpack version: ")
 
     for resource_config in config.get('Resource', []):
 
@@ -173,7 +176,7 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
         name = resource_config.get('name', "")
         filename = resource_config.get('filename', "")
 
-        resource = next((x for x in intermediate.resources if name == x.name or filename == x.file.name), None)
+        resource = next((x for x in _intermediate.resources if name == x.name or filename == x.file.name), None)
         if not resource: continue
 
         if resource_config.get("optional") is True:
@@ -192,20 +195,34 @@ def read_config_into(cfg_path: Path, intermediate: Intermediate) -> None:
                     resource.providers['Other'] = Resource.Provider(url = url)
 
             case "remove": 
-                intermediate.resources.remove(resource)
+                _intermediate.resources.remove(resource)
             case "override": 
-                intermediate.overrides.append(resource.file)
-                intermediate.resources.remove(resource)
+                _intermediate.overrides.append(resource.file)
+                _intermediate.resources.remove(resource)
             case "ignore": pass
             case _: print(f"Wrong action for {resource.name}!")
 
         if resource in lost_resources:
             lost_resources.remove(resource)
 
+    for file_config in config.get('File', []):
+
+        name = file_config.get('name', '')
+        file = next((x for x in _intermediate.overrides if name == x.name), None)
+        if not file: continue
+
+        match file_config.get('action'):
+            case "remove": _intermediate.overrides.remove(file)
+            case _: print("You should specify proper action for file")
+
     for resource in lost_resources:
         print("No config entry found for resource:", resource.name)
+
+    return _intermediate
         
-async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> None: 
+async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> Intermediate: 
+
+    _intermediate = deepcopy(intermediate)
 
     @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def download_file(url: str) -> tuple[str, bytes]:
@@ -213,10 +230,10 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
             return url, await response.read()
 
     futures = [download_file(r.providers['Other'].url) for r 
-        in intermediate.resources if "Other" in r.providers]
+        in _intermediate.resources if "Other" in r.providers]
     files = await asyncio.gather(*futures)
 
-    for resource in intermediate.resources:
+    for resource in _intermediate.resources:
         if provider := resource.providers.get('Other'):
             cloud_file = next(file for url, file in files if url == provider.url)
             sha1, sha256, sha512 = get_hashes(cloud_file, "sha1", "sha256", "sha512")
@@ -228,6 +245,8 @@ async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) 
                 resource.file.hash.sha256 = sha256 
                 resource.file.hash.sha512 = sha512 
                 resource.file.size = len(cloud_file)
+
+    return _intermediate
 
 def get_name_from_scheme(abbr: str, format: str, pack: Intermediate) -> str:
     return config.output_naming_scheme.format(abbr=abbr, format=format, name=pack.name, version=pack.version, pack=pack)

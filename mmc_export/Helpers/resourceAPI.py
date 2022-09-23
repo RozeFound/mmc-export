@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.6.1"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.7.0"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
