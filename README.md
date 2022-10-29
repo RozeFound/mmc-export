@@ -144,7 +144,7 @@ Must be used as `--scheme "{keyword}_Literally any text"` without file extension
 - `format` - full format name, e.g. `CurseForge`, `Packwiz`
 - `name` same as `pack.name` - modpack name
 - `version` same as `pack.version` - modpack version
-- `pack` - pointer to [Intermediate](mmc_export/Helpers/structures.py#L49-L65) structure
+- `pack` - pointer to [Intermediate](mmc_export/Helpers/structures.py#L59-L66) structure
 
 Default scheme is as simple as `{abbr}_{name}`
 
