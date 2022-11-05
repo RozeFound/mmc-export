@@ -116,4 +116,4 @@ class Modrinth(Writer):
         name = get_name_from_scheme("MR", "Modrinth", self.intermediate)
         archive_path = self.modpack_path.joinpath("__tmp__." + name).as_posix()
         archive = Path(make_archive(archive_path, 'zip', self.temp_dir, '.'))
-        archive.replace(archive.with_name(name).with_suffix(".mrpack"))
+        archive.replace(archive.with_name(name + ".").with_suffix(".mrpack"))
