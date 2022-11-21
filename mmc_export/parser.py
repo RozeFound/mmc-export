@@ -48,8 +48,11 @@ class Parser(Format):
 
     def get_override(self, path: Path):
 
-        if "minecraft" not in path.parts: return
-        root_dir_id = path.parts.index("minecraft")
+        for n, part in enumerate(path.parts):
+            if part in ("minecraft", ".minecraft"):
+                root_dir_id = n; break
+        else: return
+        
         relative_path = path.relative_to(*path.parts[:root_dir_id + 1]).parent
 
         file = File(
