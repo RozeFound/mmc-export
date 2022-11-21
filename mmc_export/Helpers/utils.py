@@ -1,5 +1,6 @@
-import asyncio, sys, re
+import asyncio, sys, re, dataclasses, json
 from copy import deepcopy
+from time import sleep
 import tenacity as tn
 from io import BytesIO
 from typing import Any
@@ -8,9 +9,9 @@ from pprint import pformat
 from urllib.parse import urlparse
 
 import keyring as secret_store
+from httpx import Client, AsyncClient
 from argparse import SUPPRESS, ArgumentParser, Namespace
-from aiohttp_client_cache.session import CachedSession
-from tomli import loads as parse_toml
+from tomllib import loads as parse_toml
 
 from .. import config
 from .structures import Intermediate, Resource
@@ -42,40 +43,42 @@ def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
 def get_hashes(file: Path | BytesIO | bytes, *args: str):
     return [get_hash(file, hash_type) for hash_type in args]
 
-async def add_github_token(session: CachedSession) -> None:
+def add_github_token() -> None:
 
     headers = {"Accept": "application/json"}
+    client = Client(base_url="https://github.com/login", headers=headers)
 
-    async with session.disabled():
-        url = "https://github.com/login/device/code"
-        async with session.post(url, params={"client_id": config.OAUTH_GITHUB_CLIENT_ID}, headers=headers) as response:
-            data = await response.json()
+    params = {"client_id": config.OAUTH_GITHUB_CLIENT_ID}
+    response = client.post("/device/code", params=params)
 
-            device_code = data['device_code']
-            user_code = data['user_code']
-            verification_uri = data['verification_uri']
-            interval = data['interval']
+    if response.status_code != 200: return
 
-            print(f" To proceed, enter the code: {user_code}")
-            print(f"Here: {verification_uri}")
+    data = response.json()
+    device_code = data['device_code']
+    user_code = data['user_code']
+    verification_uri = data['verification_uri']
+    interval = data['interval']
 
-        payload = {"client_id": config.OAUTH_GITHUB_CLIENT_ID, "device_code": device_code, 
-            "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
+    print(f" To proceed, enter the code: {user_code}")
+    print(f"Here: {verification_uri}")
 
-        while(True):      
-            url = "https://github.com/login/oauth/access_token"
-            async with session.post(url, params=payload, headers=headers) as response:
-                data = await response.json()
+    payload = {"client_id": config.OAUTH_GITHUB_CLIENT_ID, "device_code": device_code, 
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
 
-                match data.get('error'):
-                    case "authorization_pending": await asyncio.sleep(interval); continue
-                    case "expired_token": print("Confirmation time is expired"); return
-                    case "access_denied": print("Token request declined"); return
+    while(True):      
+        response = client.post("/oauth/access_token", params=payload)
+        if response.status_code != 200: return
+        data = response.json()
 
-                if token := data.get('access_token'):
-                    secret_store.set_password("mmc-export", "github-token", token)
-                    print("Successfully authorized!")
-                    return
+        match data.get('error'):
+            case "authorization_pending": sleep(interval); continue
+            case "expired_token": print("Confirmation time is expired"); return
+            case "access_denied": print("Token request declined"); return
+
+        if token := data.get('access_token'):
+            secret_store.set_password("mmc-export", "github-token", token)
+            print("Successfully authorized!")
+            return
 
 def delete_github_token() -> None:
     try: secret_store.delete_password("mmc-export", "github-token")
@@ -99,18 +102,13 @@ def parse_args() -> Namespace:
     arg_parser.add_argument('--modrinth-search', dest='modrinth_search', type=str, choices=mr_search, default='exact')
     arg_parser.add_argument('--exclude-providers', dest='excluded_providers', type=str, nargs="+", choices=providers, default=[])
     arg_parser.add_argument('--provider-priority', dest="providers_priority", type=str, nargs="+", choices=providers)
-    arg_parser.add_argument('--skip-cache', dest='skip_cache', action='store_true')
     arg_parser.add_argument('-v', '--version', dest='modpack_version', type=str)
     arg_parser.add_argument('--scheme', dest='scheme', type=str)
 
     arg_subs = arg_parser.add_subparsers(dest='cmd')
     arg_subs.add_parser('gh-login', add_help=False)
     arg_subs.add_parser('gh-logout', add_help=False)
-
-    arg_cache = arg_subs.add_parser('purge-cache', add_help=False)
-    arg_cache.add_argument('--web', dest='cache_web', action='store_true')
-    arg_cache.add_argument('--files', dest='cache_files', action='store_true')
-    arg_cache.add_argument('--all', dest='cache_all', action='store_true')
+    arg_subs.add_parser('purge-cache', add_help=False)
     
     args = arg_parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -139,12 +137,6 @@ def parse_args() -> Namespace:
             print("You must specify ALL providers in providers priority!")
             print("Default priority will be used for this run.")
         else: config.providers_priority = tuple(priority)
-
-    if args.cmd and args.cmd == "purge-cache":
-        if not args.cache_web \
-            or not args.cache_files \
-            or not args.cache_all:
-            args.cache_all = True
 
     if not args.cmd:
         if not args.input: arg_parser.error("Input must be specified!")
@@ -220,14 +212,14 @@ def parse_config(cfg_path: Path, intermediate: Intermediate) -> Intermediate:
 
     return _intermediate
         
-async def resolve_conflicts(session: CachedSession, intermediate: Intermediate) -> Intermediate: 
+async def resolve_conflicts(http_client: AsyncClient, intermediate: Intermediate) -> Intermediate: 
 
     _intermediate = deepcopy(intermediate)
 
     @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def download_file(url: str) -> tuple[str, bytes]:
-        async with session.get(url) as response:
-            return url, await response.read()
+        response = await http_client.get(url)
+        return url, await response.aread()
 
     futures = [download_file(r.providers['Other'].url) for r 
         in _intermediate.resources if "Other" in r.providers]
@@ -252,7 +244,6 @@ def get_name_from_scheme(abbr: str, format: str, pack: Intermediate) -> str:
     return config.output_naming_scheme.format(abbr=abbr, format=format, name=pack.name, version=pack.version, pack=pack)
 
 
-import dataclasses, json
 class JsonEncoder(json.JSONEncoder):
 
     def clean(self, value) -> dict | list | Any:

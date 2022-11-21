@@ -2,9 +2,7 @@ from importlib import import_module
 from json import dump as write_json
 from shutil import rmtree
 
-from aiohttp import TCPConnector
-from aiohttp_client_cache.backends.filesystem import FileBackend
-from aiohttp_client_cache.session import CachedSession
+from httpx import AsyncClient, Limits, Timeout
 
 from .Helpers.resourceAPI import ResourceAPI
 from .Helpers.utils import (JsonEncoder, add_github_token, parse_args,
@@ -20,26 +18,23 @@ async def program():
     ResourceAPI.modrinth_search_type = args.modrinth_search
     ResourceAPI.excluded_providers = args.excluded_providers
 
-    cache = FileBackend("mmc-export", use_temp=True, urls_expire_after={'*.jar': -1}, allowed_methods=("GET", "POST", "HEAD"))
-    async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session: 
-        if args.skip_cache: session.cache.disabled = True # type: ignore
+    timeout = Timeout(timeout=5, read=10)
+    # There is no limits actually in Limits constructor
+    async with AsyncClient(limits=Limits(), timeout=timeout, follow_redirects=True) as http_client: 
 
         match args.cmd:
-            case "gh-login": await add_github_token(session); return # type: ignore
+            case "gh-login": add_github_token(); return
             case "gh-logout": 
                 url = f"https://github.com/settings/connections/applications/{config.OAUTH_GITHUB_CLIENT_ID}"
                 print(f"You can revoke your access token by the following link: \n{url}"); return
-            case "purge-cache":
-                if args.cache_web or args.cache_all: await session.cache.clear() # type: ignore
-                if args.cache_files or args.cache_all: rmtree(config.DEFAULT_CACHE_DIR, ignore_errors=True)
-                return
+            case "purge-cache": rmtree(config.DEFAULT_CACHE_DIR, ignore_errors=True); return
 
-        parser = Parser(args.input, session) # type: ignore
+        parser = Parser(args.input, http_client) 
         intermediate = await parser.parse()
         
         if version := args.modpack_version: intermediate.version = version
         intermediate = parse_config(args.config, intermediate)
-        intermediate = await resolve_conflicts(session, intermediate) # type: ignore
+        intermediate = await resolve_conflicts(http_client, intermediate)
 
         for format in args.formats:
 

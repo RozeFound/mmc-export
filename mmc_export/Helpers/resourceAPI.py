@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from zipfile import ZipFile
 
 import tenacity as tn
-from aiohttp_client_cache.session import CachedSession
+from httpx import AsyncClient
 
 from .structures import Intermediate, Resource
 from .utils import delete_github_token, get_github_token, get_hash
@@ -20,15 +20,15 @@ class ResourceAPI(object):
     modrinth_search_type: str
     excluded_providers: list[str]
 
-    def __init__(self, session: CachedSession, intermediate: Intermediate) -> None:
+    def __init__(self, http_client: AsyncClient, intermediate: Intermediate) -> None:
 
-        self.session = session
+        self.client = http_client
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.7.3"
-        self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
-        self.session.headers["Content-Type"] = "application/json"
-        self.session.headers["Accept"] = "application/json"
+        self.client.headers["User-Agent"] = "RozeFound/mmc-export/2.7.3"
+        self.client.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
+        self.client.headers["Content-Type"] = "application/json"
+        self.client.headers["Accept"] = "application/json"
 
         self.github = "https://api.github.com"
         self.modrinth = "https://api.modrinth.com/v2"
@@ -100,34 +100,34 @@ class ResourceAPI(object):
                 break
         else: return
 
-        async with self.session.get(f"https://api.github.com/repos/{owner}/{repo}/releases") as response:
-            if response.status != 200 and response.status != 504: return
+        response = await self.client.get(f"https://api.github.com/repos/{owner}/{repo}/releases")
+        if response.status_code != 200 and response.status_code != 504: return
 
-            for release in await response.json():
-                for asset in release['assets']:
-                    if asset['name'] == resource.file.name:
-                        url = asset['browser_download_url']
-                        author = release['author']['login']
-                        break
-                else: continue
-                break
-            else: return
+        for release in response.json():
+            for asset in release['assets']:
+                if asset['name'] == resource.file.name:
+                    url = asset['browser_download_url']
+                    author = release['author']['login']
+                    break
+            else: continue
+            break
+        else: return
 
-            resource.providers['Other'] = Resource.Provider(
-                ID     = None,
-                fileID = None,
-                url    = url,
-                slug   = meta['id'],
-                author = author)
+        resource.providers['Other'] = Resource.Provider(
+            ID     = None,
+            fileID = None,
+            url    = url,
+            slug   = meta['id'],
+            author = author)
 
 
 class ResourceAPI_Batched(ResourceAPI):
 
-    def __init__(self, session: CachedSession, intermediate: Intermediate) -> None:
+    def __init__(self, http_client: AsyncClient, intermediate: Intermediate) -> None:
 
         self.queue: list[tuple[dict, Resource]] = list()
 
-        super().__init__(session, intermediate)
+        super().__init__(http_client, intermediate)
 
     def queue_resource(self, path: Path) -> None:
 
@@ -158,18 +158,18 @@ class ResourceAPI_Batched(ResourceAPI):
         if "CurseForge" in self.excluded_providers: return
 
         payload = {"fingerprints":[resource.file.hash.murmur2 for _, resource in self.queue]}
-        async with self.session.post(f"{self.curseforge}/fingerprints", json=payload) as response:
-            if response.status != 200 and response.status != 504: return
-            if matches := (await response.json())['data']['exactMatches']:
-                versions = {str(version['file']['fileFingerprint']): version for version in matches}
-            else: return
+        response = await self.client.post(f"{self.curseforge}/fingerprints", json=payload)
+        if response.status_code != 200 and response.status_code != 504: return
+        if matches := response.json()['data']['exactMatches']:
+            versions = {str(version['file']['fileFingerprint']): version for version in matches}
+        else: return
 
         payload = {"modIds": [version['id'] for version in versions.values()]}
-        async with self.session.post(f"{self.curseforge}/mods", json=payload) as response:
-            if response.status != 200 and response.status != 504: return
-            if addons_array := (await response.json())['data']:
-                addons = {addon['id']: addon for addon in addons_array}
-            else: return
+        response = await self.client.post(f"{self.curseforge}/mods", json=payload)
+        if response.status_code != 200 and response.status_code != 504: return
+        if addons_array := response.json()['data']:
+            addons = {addon['id']: addon for addon in addons_array}
+        else: return
 
         for _, resource in self.queue:
             if version := versions.get(resource.file.hash.murmur2):
@@ -194,23 +194,23 @@ class ResourceAPI_Batched(ResourceAPI):
         search_queue: list[tuple[dict, Resource]] = list()
 
         payload = {"algorithm": "sha1", "hashes": [resource.file.hash.sha1 for _, resource in self.queue]}
-        async with self.session.post(f"{self.modrinth}/version_files", json=payload) as response:
-            if response.status != 200 and response.status != 504 and response.status != 423: return
-            versions = await response.json()
+        response = await self.client.post(f"{self.modrinth}/version_files", json=payload)
+        if response.status_code != 200 and response.status_code != 504 and response.status_code != 423: return
+        versions = response.json()
 
-            for meta, resource in self.queue:
-                if version := versions.get(resource.file.hash.sha1):
+        for meta, resource in self.queue:
+            if version := versions.get(resource.file.hash.sha1):
 
-                    file = next(file for file in version['files'] 
-                        if resource.file.hash.sha1 == file['hashes']['sha1']
-                        and resource.file.hash.sha512 == file['hashes']['sha512'])
+                file = next(file for file in version['files'] 
+                    if resource.file.hash.sha1 == file['hashes']['sha1']
+                    and resource.file.hash.sha512 == file['hashes']['sha512'])
 
-                    resource.providers['Modrinth'] = Resource.Provider(
-                    ID     = version['project_id'],
-                    fileID = version['id'],
-                    url    = file['url'],
-                    slug   = meta['id'])
-                else: search_queue.append((meta, resource))
+                resource.providers['Modrinth'] = Resource.Provider(
+                ID     = version['project_id'],
+                fileID = version['id'],
+                url    = file['url'],
+                slug   = meta['id'])
+            else: search_queue.append((meta, resource))
 
         if self.modrinth_search_type != "exact": await self._get_batched_modrinth_loose(search_queue)
 
@@ -222,9 +222,9 @@ class ResourceAPI_Batched(ResourceAPI):
         @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_incrementing(1, 15, 60))
         async def get_project_id(meta: dict, resource: Resource):
             if self.modrinth_search_type == "loose":      
-                async with self.session.get(f"{self.modrinth}/search?query={resource.name}&limit=1") as response: 
-                    if response.status != 200 and response.status != 504 and response.status != 423: return resource, None
-                    if hits := (await response.json())['hits']: return resource, hits[0]['project_id']
+                response = await self.client.get(f"{self.modrinth}/search?query={resource.name}&limit=1")
+                if response.status_code != 200 and response.status_code != 504 and response.status_code != 423: return resource, None
+                if hits := response.json()['hits']: return resource, hits[0]['project_id']
             return resource, meta['id']
 
         futures = (get_project_id(meta, resource) for meta, resource in search_queue)
@@ -232,15 +232,15 @@ class ResourceAPI_Batched(ResourceAPI):
         if not project_ids: return
 
         l2s = lambda l: "[{}]".format(",".join(map('"{}"'.format, l))) # list to string convesion
-        async with self.session.get(f"{self.modrinth}/projects?ids={l2s(project_ids.values())}") as response:
-            if response.status != 200 and response.status != 504 and response.status != 423: return
-            for project in (projects := await response.json()): version_ids.extend(project['versions'])
+        response = await self.client.get(f"{self.modrinth}/projects?ids={l2s(project_ids.values())}")
+        if response.status_code != 200 and response.status_code != 504 and response.status_code != 423: return
+        for project in (projects := response.json()): version_ids.extend(project['versions'])
 
-            if not version_ids: return
+        if not version_ids: return
 
-            async with self.session.get(f"{self.modrinth}/versions?ids={l2s(version_ids)}") as response:
-                if response.status != 200 and response.status != 504 and response.status != 423: return
-                for project in projects: project['versions'] = [version for version in await response.json()
+        response = await self.client.get(f"{self.modrinth}/versions?ids={l2s(version_ids)}")
+        if response.status_code != 200 and response.status_code != 504 and response.status_code != 423: return
+        for project in projects: project['versions'] = [version for version in response.json()
                                                                 if version['project_id'] == project['id']]
 
         minecraft_major_version = ".".join(self.intermediate.minecraft_version.split(".")[:2])
@@ -274,19 +274,18 @@ class ResourceAPI_Batched(ResourceAPI):
 
         if "GitHub" in self.excluded_providers: return
         
-        if not self.session.headers.get('Authorization'):
-            if token := get_github_token(): self.session.headers['Authorization'] = f"Bearer {token}"
+        if not self.client.headers.get('Authorization'):
+            if token := get_github_token(): self.client.headers['Authorization'] = f"Bearer {token}"
             else: 
                 futures = [self._get_github(meta, resource) for meta, resource in self.queue]
                 await asyncio.gather(*futures)
 
-                async with self.session.disabled():
-                    async with self.session.get("https://api.github.com/rate_limit") as response:
-                        ratelimit = (await response.json())['resources']['core']
-                        time_remaining = datetime.fromtimestamp(float(ratelimit['reset']))
-                        if ratelimit['remaining'] == 0: 
-                            print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
-                            print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining:%H:%M}")
+            response = await self.client.get("https://api.github.com/rate_limit")
+            ratelimit = response.json()['resources']['core']
+            time_remaining = datetime.fromtimestamp(float(ratelimit['reset']))
+            if ratelimit['remaining'] == 0: 
+                print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
+                print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining:%H:%M}")
                 return
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
@@ -324,22 +323,22 @@ class ResourceAPI_Batched(ResourceAPI):
                     downloadUrl
         } } } } } } """ + GqlQuery().operation(queries=queries).generate()
 
-        async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
-            if response.status == 401: delete_github_token(); raise tn.TryAgain
-            if response.status != 200 and response.status != 504: return
-            data = (await response.json())['data']      
+        response = await self.client.post(f"{self.github}/graphql", json={"query": payload})
+        if response.status_code == 401: delete_github_token(); raise tn.TryAgain
+        if response.status_code != 200 and response.status_code != 504: return
+        data = response.json()['data']      
 
-            for meta, resource in self.queue:
-                if not data.get(alias := pattern.sub('', meta['id']) if meta['id'] else "unknown"): continue
-                for release in data.get(alias, {}).get('releases', {}).get('edges', []):
-                    for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
-                        if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
-                    else: continue
-                    break
+        for meta, resource in self.queue:
+            if not data.get(alias := pattern.sub('', meta['id']) if meta['id'] else "unknown"): continue
+            for release in data.get(alias, {}).get('releases', {}).get('edges', []):
+                for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
+                    if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
                 else: continue
+                break
+            else: continue
 
-                resource.providers['Other'] = Resource.Provider(
-                    ID     = None,
-                    fileID = None,
-                    url    = url,
-                    slug   = meta['id'])
+            resource.providers['Other'] = Resource.Provider(
+                ID     = None,
+                fileID = None,
+                url    = url,
+                slug   = meta['id'])

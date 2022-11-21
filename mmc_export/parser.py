@@ -2,7 +2,7 @@ from configparser import ConfigParser
 from json import loads as parse_json
 from pathlib import Path
 
-from aiohttp_client_cache.session import CachedSession
+from httpx import AsyncClient
 
 from .Helpers.resourceAPI import ResourceAPI_Batched
 from .Helpers.structures import File, Format, Intermediate
@@ -11,10 +11,10 @@ from .Helpers.utils import get_hash
 
 class Parser(Format):
 
-    def __init__(self, path: Path, session: CachedSession) -> None:
+    def __init__(self, path: Path, http_client: AsyncClient) -> None:
 
         self.intermediate = Intermediate()
-        self.resourceAPI = ResourceAPI_Batched(session, self.intermediate)
+        self.resourceAPI = ResourceAPI_Batched(http_client, self.intermediate)
 
         super().__init__(path)
 
