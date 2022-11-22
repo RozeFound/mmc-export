@@ -25,7 +25,7 @@ async def program():
         if args.skip_cache: session.cache.disabled = True # type: ignore
 
         match args.cmd:
-            case "gh-login": await add_github_token(session); return # type: ignore
+            case "gh-login": await add_github_token(); return
             case "gh-logout": 
                 url = f"https://github.com/settings/connections/applications/{config.OAUTH_GITHUB_CLIENT_ID}"
                 print(f"You can revoke your access token by the following link: \n{url}"); return

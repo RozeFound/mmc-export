@@ -18,7 +18,7 @@ class Parser(Format):
 
         super().__init__(path)
 
-    def get_basic_info(self):
+    def get_basic_info(self) -> None:
 
         data = next(self.temp_dir.glob("**/instance.cfg")).read_text()
 
@@ -46,7 +46,7 @@ class Parser(Format):
                     self.intermediate.modloader.type = "forge"
                     self.intermediate.modloader.version = version
 
-    def get_override(self, path: Path):
+    def get_override(self, path: Path) -> None:
 
         for n, part in enumerate(path.parts):
             if part in ("minecraft", ".minecraft"):

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.7.4"
+version = "2.8.0"
 description = "Export MMC modpack to other modpack formats"
 authors = ["RozeFound"]
 license = "MIT"
@@ -20,21 +20,17 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-aiohttp = "^3.8.1"
-murmurhash2 = "^0.2.10"
-tenacity = "^8.0.1"
-Werkzeug = "^2.1.2"
-cryptography = "^37.0.2"
+python = "^3.11"
+aiohttp = "^3.8.3"
 aiohttp-client-cache = {extras = ["filesystem"], version = "^0.7.3"}
-xxhash = "^3.0.0"
+murmurhash2 = "^0.2.10"
+tenacity = "^8.1.0"
+Werkzeug = "^2.2.2"
+cryptography = "38.0.3"
+xxhash = "^3.1.0"
 gql-query-builder = "^0.1.7"
-keyring = "^23.5.1"
+keyring = "^23.11.0"
 tomli-w = "^1.0.0"
-tomli = "^2.0.1"
-
-[tool.poetry.dev-dependencies]
-bandit = "^1.7.0"
 
 [tool.poetry.scripts]
 mmc-export = "mmc_export:main"

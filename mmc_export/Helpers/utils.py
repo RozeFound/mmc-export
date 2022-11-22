@@ -9,8 +9,9 @@ from urllib.parse import urlparse
 
 import keyring as secret_store
 from argparse import SUPPRESS, ArgumentParser, Namespace
+from aiohttp import ClientSession
 from aiohttp_client_cache.session import CachedSession
-from tomli import loads as parse_toml
+from tomllib import loads as parse_toml
 
 from .. import config
 from .structures import Intermediate, Resource
@@ -42,13 +43,13 @@ def get_hash(file: Path | BytesIO | bytes, hash_type: str = "sha256") -> str:
 def get_hashes(file: Path | BytesIO | bytes, *args: str):
     return [get_hash(file, hash_type) for hash_type in args]
 
-async def add_github_token(session: CachedSession) -> None:
+async def add_github_token() -> None:
 
     headers = {"Accept": "application/json"}
+    async with ClientSession(base_url="https://github.com/login", headers=headers) as session: 
 
-    async with session.disabled():
-        url = "https://github.com/login/device/code"
-        async with session.post(url, params={"client_id": config.OAUTH_GITHUB_CLIENT_ID}, headers=headers) as response:
+        params = {"client_id": config.OAUTH_GITHUB_CLIENT_ID}
+        async with session.post("/device/code", params=params) as response:
             data = await response.json()
 
             device_code = data['device_code']
@@ -63,8 +64,7 @@ async def add_github_token(session: CachedSession) -> None:
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
 
         while(True):      
-            url = "https://github.com/login/oauth/access_token"
-            async with session.post(url, params=payload, headers=headers) as response:
+            async with session.post("/oauth/access_token", params=payload) as response:
                 data = await response.json()
 
                 match data.get('error'):
