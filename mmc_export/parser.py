@@ -34,15 +34,15 @@ class Parser(Format):
 
             match component:
 
-                case {'cachedName': "Minecraft", 'version': version}: 
+                case {'uid': "net.minecraft", 'version': version}: 
                     self.intermediate.minecraft_version = version
-                case {'cachedName': "Fabric Loader", 'version': version}: 
+                case {'uid': "net.fabricmc.fabric-loader", 'version': version}: 
                     self.intermediate.modloader.type = "fabric"
                     self.intermediate.modloader.version = version
-                case {'cachedName': "Quilt Loader", 'version': version}: 
+                case {'uid': "org.quiltmc.quilt-loader", 'version': version}: 
                     self.intermediate.modloader.type = "quilt"
                     self.intermediate.modloader.version = version
-                case {'cachedName': "Forge", 'version': version}: 
+                case {'uid': "net.minecraftforge", 'version': version}: 
                     self.intermediate.modloader.type = "forge"
                     self.intermediate.modloader.version = version
 
