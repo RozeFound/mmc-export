@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.1"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.2"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -94,10 +94,15 @@ class ResourceAPI(object):
             parsed_link = urlparse(link)
 
             if parsed_link.netloc == "github.com":
-                owner, repo = parsed_link.path[1:].split('/')[:2]
-                repo = repo.removesuffix(".git")
+
+                path_parts = parsed_link.path[1:].split('/')
+                if len(path_parts) < 2: continue
+
+                owner, repo = path_parts[:2]; repo = repo.removesuffix(".git")
                 resource.links.append(f"https://github.com/{owner}/{repo}")
+
                 break
+
         else: return
 
         async with self.session.get(f"https://api.github.com/repos/{owner}/{repo}/releases") as response:
@@ -270,24 +275,29 @@ class ResourceAPI_Batched(ResourceAPI):
                         break
 
     @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
+    async def _get_github_fallback(self) -> None:
+
+        futures = [self._get_github(meta, resource) for meta, resource in self.queue]
+        await asyncio.gather(*futures)
+
+        async with self.session.disabled():
+            async with self.session.get("https://api.github.com/rate_limit") as response:
+                ratelimit = (await response.json())['resources']['core']
+                time_remaining = datetime.fromtimestamp(float(ratelimit['reset']))
+                if ratelimit['remaining'] == 0: 
+                    print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
+                    print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining:%H:%M}")
+        
+
+    @tn.retry(stop=tn.stop.stop_after_attempt(5), wait=tn.wait.wait_fixed(1))
     async def _get_batched_github(self) -> None:
 
         if "GitHub" in self.excluded_providers: return
         
         if not self.session.headers.get('Authorization'):
-            if token := get_github_token(): self.session.headers['Authorization'] = f"Bearer {token}"
-            else: 
-                futures = [self._get_github(meta, resource) for meta, resource in self.queue]
-                await asyncio.gather(*futures)
-
-                async with self.session.disabled():
-                    async with self.session.get("https://api.github.com/rate_limit") as response:
-                        ratelimit = (await response.json())['resources']['core']
-                        time_remaining = datetime.fromtimestamp(float(ratelimit['reset']))
-                        if ratelimit['remaining'] == 0: 
-                            print("You have exceeded the GitHub API rate-limit, only cached results will be used.")
-                            print(f"Please sign in with `mmc-export gh-login` or try again at {time_remaining:%H:%M}")
-                return
+            if token := get_github_token(): 
+                self.session.headers['Authorization'] = f"Bearer {token}"
+            else: return await self._get_github_fallback()
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
         repositories: list[Repository] = list()
@@ -299,12 +309,17 @@ class ResourceAPI_Batched(ResourceAPI):
                 parsed_link = urlparse(link)
 
                 if parsed_link.netloc == "github.com":
+
+                    path_parts = parsed_link.path[1:].split('/')
+                    if len(path_parts) < 2: continue
+                    owner, name = path_parts[:2]
+
                     alias = pattern.sub('', meta['id'])
-                    owner, name = parsed_link.path[1:].split('/')[:2]
                     repo = Repository(name.removesuffix(".git"), owner, alias)
                     resource.links.append(f"https://github.com/{repo.owner}/{repo.name}")
                     repositories.append(repo)
                     break
+
             else: continue
 
         from gql_query_builder import GqlQuery
