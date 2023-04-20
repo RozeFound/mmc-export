@@ -78,7 +78,7 @@ class CurseForge(Writer):
         with open(self.temp_dir / "manifest.json", 'w') as file:
             write_json(self.manifest, file, indent=4)
 
-        with open(self.temp_dir / "modlist.html", 'w') as file:
+        with open(self.temp_dir / "modlist.html", 'w', encoding="utf-8") as file:
             self.modlist.insert(0, "<ul>\n")
             self.modlist.append("</ul>\n")
             file.writelines(self.modlist)

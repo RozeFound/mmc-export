@@ -94,7 +94,7 @@ class packwiz(Writer):
         toml_path = self.temp_dir / resource.file.relativePath / (slug + ".pw.toml")
         toml_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(toml_path, "w") as file:
+        with open(toml_path, "w", encoding="utf-8") as file:
 
             if not data['update']: del data['update']
             toml_data = encode_toml(data)
