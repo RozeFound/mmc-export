@@ -2,6 +2,7 @@ from importlib import import_module
 from json import dump as write_json
 from shutil import rmtree
 
+import ssl, certifi
 from aiohttp import TCPConnector
 from aiohttp_client_cache.backends.filesystem import FileBackend
 from aiohttp_client_cache.session import CachedSession
@@ -20,8 +21,9 @@ async def program():
     ResourceAPI.modrinth_search_type = args.modrinth_search
     ResourceAPI.excluded_providers = args.excluded_providers
 
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
     cache = FileBackend("mmc-export", use_temp=True, urls_expire_after={'*.jar': -1}, allowed_methods=("GET", "POST", "HEAD"))
-    async with CachedSession(cache=cache, connector=TCPConnector(limit=0)) as session: 
+    async with CachedSession(cache=cache, connector=TCPConnector(limit=0, ssl_context=ssl_context)) as session: 
         if args.skip_cache: session.cache.disabled = True # type: ignore
 
         match args.cmd:
