@@ -46,10 +46,10 @@ def get_hashes(file: Path | BytesIO | bytes, *args: str):
 async def add_github_token() -> None:
 
     headers = {"Accept": "application/json"}
-    async with ClientSession(base_url="https://github.com/login", headers=headers) as session: 
+    async with ClientSession(base_url="https://github.com", headers=headers) as session: 
 
         params = {"client_id": config.OAUTH_GITHUB_CLIENT_ID}
-        async with session.post("/device/code", params=params) as response:
+        async with session.post("/login/device/code", params=params) as response:
             data = await response.json()
 
             device_code = data['device_code']
@@ -64,7 +64,7 @@ async def add_github_token() -> None:
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code"}
 
         while(True):      
-            async with session.post("/oauth/access_token", params=payload) as response:
+            async with session.post("/login/oauth/access_token", params=payload) as response:
                 data = await response.json()
 
                 match data.get('error'):
