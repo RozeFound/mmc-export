@@ -133,8 +133,6 @@ name = "Useless file.txt"
 action = "remove"
 ```
 
-> Also specifying both name and filename is optional but recommended, you can always leave only one of these
-
 ## Scheme Formatting
 
 Must be used as `--scheme "{keyword}_Literally any text"` without file extension, follows python's [format string syntax](https://docs.python.org/3/library/string.html#format-string-syntax)
