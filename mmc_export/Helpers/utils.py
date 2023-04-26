@@ -82,7 +82,9 @@ def delete_github_token() -> None:
     except secret_store.core.backend.errors.PasswordDeleteError: return
 
 def get_github_token() -> str | None:
-    return secret_store.get_password("mmc-export", "github-token")
+    try: return secret_store.get_password("mmc-export", "github-token")
+    except secret_store.core.backend.errors.NoKeyringError: return
+    except secret_store.core.backend.errors.InitError: return
 
 def parse_args() -> Namespace:
 
