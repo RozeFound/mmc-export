@@ -6,6 +6,17 @@
 
 Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz). MultiMC forks which didn't changed export format much also supported.
 
+<table class="alert-warn" align=center>
+<tr>
+    <td> ⚠️ </td>
+    <td>
+        mmc-export development is currently in <b>the maintenance-only mode</b>.
+        This is to show that any abnormal lack of activity isn't going to mean it is
+        no longer maintained. mmc-export considered feature-complete, and only will be updated when bugs arrive.
+    </td>
+</tr>
+</table>
+
 # Features
 
 - Support conversion to:
