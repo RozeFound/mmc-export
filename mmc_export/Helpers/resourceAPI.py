@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.5"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.6"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -293,10 +293,12 @@ class ResourceAPI_Batched(ResourceAPI):
     async def _get_batched_github(self) -> None:
 
         if "GitHub" in self.excluded_providers: return
+
+        headers = self.session.headers.copy()
         
         if not self.session.headers.get('Authorization'):
             if token := get_github_token(): 
-                self.session.headers['Authorization'] = f"Bearer {token}"
+                headers['Authorization'] = f"Bearer {token}"
             else: return await self._get_github_fallback()
 
         Repository = namedtuple('Repository', ['name', 'owner', 'alias'])
@@ -339,7 +341,7 @@ class ResourceAPI_Batched(ResourceAPI):
                     downloadUrl
         } } } } } } """ + GqlQuery().operation(queries=queries).generate()
 
-        async with self.session.post(f"{self.github}/graphql", json={"query": payload}) as response:
+        async with self.session.post(f"{self.github}/graphql", json={"query": payload}, headers=headers) as response:
             if response.status == 401: delete_github_token(); raise tn.TryAgain
             if response.status != 200 and response.status != 504: return
             data = (await response.json())['data']      
