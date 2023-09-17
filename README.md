@@ -5,6 +5,18 @@
 [![GitHub license](https://img.shields.io/github/license/RozeFound/mmc-export)](/LICENSE)
 
 Since MultiMC export features are very limited, I created a script that solves this problem, with this script you can export MultiMC pack to any popular format (e.g. curseforge, modrinth, packwiz). MultiMC forks which didn't changed export format much also supported.
+**[PrismLauncher](https://github.com/PrismLauncher/PrismLauncher) apparently already have builtin Modrinth export feature starting with version 7.0**
+
+<table class="alert-warn" align=center>
+<tr>
+    <td> ⚠️ </td>
+    <td>
+        mmc-export development is currently in <b>the maintenance-only mode</b>.
+        This is to show that any abnormal lack of activity isn't going to mean it is
+        no longer maintained. mmc-export considered feature-complete, and only will be updated when bugs arrive.
+    </td>
+</tr>
+</table>
 
 # Features
 
