@@ -121,13 +121,13 @@ speedups = ["Brotli", "aiodns", "cchardet"]
 
 [[package]]
 name = "aiohttp-client-cache"
-version = "0.7.3"
+version = "0.9.1"
 description = "Persistent cache for aiohttp requests"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "aiohttp-client-cache-0.7.3.tar.gz", hash = "sha256:c9757c91db9eb14765cc976574c69a8587b5597959542263eb83217dadc220a9"},
-    {file = "aiohttp_client_cache-0.7.3-py3-none-any.whl", hash = "sha256:c7532e3763b2dc92fb32de2ab0a1dcdbda608219b1564418fd2c4cff14082929"},
+    {file = "aiohttp_client_cache-0.9.1-py3-none-any.whl", hash = "sha256:ba036aac8042c076e5871971884502479fe01fa36c087a28da9235617a8bf3ef"},
+    {file = "aiohttp_client_cache-0.9.1.tar.gz", hash = "sha256:73be39af4dafb240d11dddd514d4b383ece0cd4c37da8a5bbfd76b149c09560c"},
 ]
 
 [package.dependencies]
@@ -136,15 +136,14 @@ aiohttp = ">=3.8,<4.0"
 aiosqlite = {version = ">=0.16", optional = true, markers = "extra == \"all\" or extra == \"filesystem\" or extra == \"sqlite\""}
 attrs = ">=21.2"
 itsdangerous = ">=2.0"
-python-forge = ">=18.6,<19.0"
 url-normalize = ">=1.4,<2.0"
 
 [package.extras]
-all = ["aioboto3 (>=9.0)", "aiobotocore (>=2.0)", "aiofiles (>=0.6.0)", "aiosqlite (>=0.16)", "motor (>=2.0)", "redis (>=4.2)"]
-docs = ["furo (>=2022.1.2)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.15.1,<0.16.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-automodapi (>=0.14)", "sphinx-copybutton (>=0.3,<0.4)", "sphinx-inline-tabs (>=2022.1.2b11,<2023.0.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
+all = ["aioboto3 (>=9.0)", "aiobotocore (>=2.0)", "aiofiles (>=0.6.0)", "aiosqlite (>=0.16)", "motor (>=3.1)", "redis (>=4.2)"]
+docs = ["furo (>=2023.8,<2024.0)", "linkify-it-py (>=2.0)", "markdown-it-py (>=2.2)", "myst-parser (>=2.0)", "python-forge (>=18.6,<19.0)", "sphinx (==7.1.2)", "sphinx-autodoc-typehints (>=1.23,<2.0)", "sphinx-automodapi (>=0.15)", "sphinx-copybutton (>=0.3,<0.4)", "sphinx-inline-tabs (>=2023.4)", "sphinxcontrib-apidoc (>=0.3)"]
 dynamodb = ["aioboto3 (>=9.0)", "aiobotocore (>=2.0)"]
 filesystem = ["aiofiles (>=0.6.0)", "aiosqlite (>=0.16)"]
-mongodb = ["motor (>=2.0)"]
+mongodb = ["motor (>=3.1)"]
 redis = ["redis (>=4.2)"]
 sqlite = ["aiosqlite (>=0.16)"]
 
@@ -798,21 +797,6 @@ files = [
 ]
 
 [[package]]
-name = "python-forge"
-version = "18.6.0"
-description = "forge (python signatures)"
-optional = false
-python-versions = "*"
-files = [
-    {file = "python_forge-18.6.0-py35-none-any.whl", hash = "sha256:bf91f9a42150d569c2e9a0d90ab60a8cbed378bdf185e5120532a3481067395c"},
-]
-
-[package.extras]
-dev = ["coverage", "mypy", "pylint", "pytest", "sphinx", "sphinx-autodoc-typehints", "sphinx-paramlinks"]
-docs = ["docutils", "requests", "sphinx (>=1.7.4)", "sphinx-paramlinks"]
-testing = ["coverage", "mypy", "pylint", "pytest"]
-
-[[package]]
 name = "pywin32-ctypes"
 version = "0.2.0"
 description = ""
@@ -1104,4 +1088,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "62d304a1b57f7860afcfb730b6322b09f99200c9cd6312a9f5e4d6ca2f020534"
+content-hash = "d2382e98419f86a2b9ebe5ef067ce60030b5df6ce9bfa9ec9c032ce3bd38da13"
