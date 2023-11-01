@@ -22,7 +22,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 aiohttp = "^3.8.3"
-aiohttp-client-cache = {extras = ["filesystem"], version = ">=0.7.3,<0.10.0"}
+aiohttp-client-cache = {extras = ["filesystem"], version = ">=0.7.3,<0.11.0"}
 murmurhash2 = "^0.2.10"
 tenacity = "^8.1.0"
 Werkzeug = ">=2.2.2,<4.0.0"
