@@ -21,6 +21,7 @@ class File:
 
     path: Path = field(default_factory=Path)
     relativePath: str = field(default_factory=str)
+    disabled: bool = False
 
 
 @dataclass

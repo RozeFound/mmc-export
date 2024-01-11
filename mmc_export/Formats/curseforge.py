@@ -36,6 +36,7 @@ class CurseForge(Writer):
 
         file_path = overrides_dir / file.relativePath
         file_path.mkdir(parents=True, exist_ok=True)
+        if file.disabled: file_path = file_path / (file.name + ".disabled")
 
         from shutil import copy2 as copy_file
         copy_file(file.path, file_path)

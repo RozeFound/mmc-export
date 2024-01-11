@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.6"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.7"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -34,7 +34,7 @@ class ResourceAPI(object):
         self.modrinth = "https://api.modrinth.com/v2"
         self.curseforge = "https://api.curseforge.com/v1"
 
-        self.cache_directory = config.DEFAULT_CACHE_DIR / "v6"
+        self.cache_directory = config.DEFAULT_CACHE_DIR / "v7"
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 
         super().__init__()
@@ -140,6 +140,7 @@ class ResourceAPI_Batched(ResourceAPI):
         
         if path.suffix == ".disabled": 
             resource.optional = True
+            resource.file.disabled = True
             resource.file.path = path.replace(path.with_suffix(''))
             resource.file.name = resource.file.path.name
 
