@@ -108,13 +108,13 @@ speedups = ["Brotli", "aiodns", "brotlicffi"]
 
 [[package]]
 name = "aiohttp-client-cache"
-version = "0.10.0"
+version = "0.11.0"
 description = "Persistent cache for aiohttp requests"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "aiohttp_client_cache-0.10.0-py3-none-any.whl", hash = "sha256:67eb7f71663c67b9029da83c250ac5faf231fcaa90734475beb64e1556a5f7eb"},
-    {file = "aiohttp_client_cache-0.10.0.tar.gz", hash = "sha256:15753840da9af01f190039a813225f77c82c5032341c48c847d0760813f9e705"},
+    {file = "aiohttp_client_cache-0.11.0-py3-none-any.whl", hash = "sha256:5b6217bc26a7b3f5f939809b63a66b67658b660809cd38869d7d45066a26d079"},
+    {file = "aiohttp_client_cache-0.11.0.tar.gz", hash = "sha256:0766fff4eda05498c7525374a587810dcc2ccb7b256809dde52ae8790a8453eb"},
 ]
 
 [package.dependencies]
@@ -1012,4 +1012,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "b4c44efff55c535ee89673b6e650ec7019f3a5470dc3d18455b61256cb0011dd"
+content-hash = "8e04f1660b9b697026536c460382afd6fb32f4a87e028cf9a7a86ed040230f2e"
