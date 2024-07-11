@@ -38,6 +38,11 @@ If you authenticate with GitHub using `mmc-export gh-login`, the limit will be r
 
 If you don't want to use github search by some reason, you can specify `--exclude-providers GitHub` as argument.
 
+# How to Install / Update
+```
+pip install -U mmc-export
+```
+
 # How to Use
 ```
 mmc-export -i modpack.zip -c config.toml -f Modrinth packwiz -o converted_modpacks
@@ -154,14 +159,9 @@ Must be used as `--scheme "{keyword}_Literally any text"` without file extension
 - `format` - full format name, e.g. `CurseForge`, `Packwiz`
 - `name` same as `pack.name` - modpack name
 - `version` same as `pack.version` - modpack version
-- `pack` - pointer to [Intermediate](mmc_export/Helpers/structures.py#L50-L66) structure
+- `pack` - pointer to [Intermediate](mmc_export/Helpers/structures.py#L51-L67) structure
 
 Default scheme is as simple as `{abbr}_{name}`
 
 ***Caution: if you don't use any format specifc keywords, output files will overwrite the same file several times***, can be ignored if you output to only one format.
 Also, be aware of your filesystem limitations, unsupported characters may lead to an error, or inaccesible file.
-
-# How to Install / Update
-```
-pip install -U mmc-export
-```
