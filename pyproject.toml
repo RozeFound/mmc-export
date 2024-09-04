@@ -26,7 +26,7 @@ aiohttp-client-cache = {extras = ["filesystem"], version = ">=0.7.3,<0.12.0"}
 murmurhash2 = "^0.2.10"
 tenacity = "^8.1.0"
 Werkzeug = ">=2.2.2,<4.0.0"
-cryptography = ">=41.0.3,<43.0.0"
+cryptography = ">=41.0.3,<44.0.0"
 xxhash = "^3.1.0"
 gql-query-builder = "^0.1.7"
 keyring = ">=23.11,<25.0"
