@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mmc-export"
-version = "2.8.7"
+version = "2.8.8"
 description = "Export MMC modpack to other modpack formats"
 authors = ["RozeFound"]
 license = "MIT"
@@ -28,10 +28,10 @@ tenacity = "^8.1.0"
 Werkzeug = ">=2.2.2,<4.0.0"
 cryptography = ">=41.0.3,<45.0.0"
 xxhash = "^3.1.0"
-gql-query-builder = "^0.1.7"
 keyring = ">=23.11,<25.0"
 tomli-w = "^1.0.0"
-certifi = ">=2023.7.22,<2025.0.0"
+certifi = "^2025.8.3"
+gql-query-builder = {git = "git@github.com:tanaydin/gql-query-builder.git", rev = "patch-2"}
 
 [tool.poetry.scripts]
 mmc-export = "mmc_export:main"
