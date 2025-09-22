@@ -39,7 +39,9 @@ If you authenticate with GitHub using `mmc-export gh-login`, the limit will be r
 If you don't want to use github search by some reason, you can specify `--exclude-providers GitHub` as argument.
 
 # How to Install / Update
+Since pypi doesn't allow us to use direct dependencies, we have to install it separately
 ```
+pip install git+https://github.com/tanaydin/gql-query-builder.git@patch-2
 pip install -U mmc-export
 ```
 

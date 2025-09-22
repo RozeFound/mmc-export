@@ -31,7 +31,6 @@ xxhash = "^3.1.0"
 keyring = ">=23.11,<25.0"
 tomli-w = "^1.0.0"
 certifi = "^2025.8.3"
-gql-query-builder = {git = "git@github.com:tanaydin/gql-query-builder.git", rev = "patch-2"}
 
 [tool.poetry.scripts]
 mmc-export = "mmc_export:main"

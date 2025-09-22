@@ -501,22 +501,6 @@ files = [
 ]
 
 [[package]]
-name = "gql-query-builder"
-version = "0.1.8.dev2+g15ccddc7e"
-description = "This is a GraphQL query builder."
-optional = false
-python-versions = ">=3.6"
-groups = ["main"]
-files = []
-develop = false
-
-[package.source]
-type = "git"
-url = "ssh://git@github.com/tanaydin/gql-query-builder.git"
-reference = "patch-2"
-resolved_reference = "15ccddc7e8b433c695646898c630691b1d59b6b2"
-
-[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1369,4 +1353,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "7d192f665305718fbae375e26cb1bf49d403a845ac04e9a79a5317cac097c58a"
+content-hash = "a2059a9e571e05057cbc736a6de367da05340e8525d35f0e35b18cde545370ec"
