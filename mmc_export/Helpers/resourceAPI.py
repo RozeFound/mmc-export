@@ -350,7 +350,9 @@ class ResourceAPI_Batched(ResourceAPI):
             for meta, resource in self.queue:
                 if not data.get(alias := pattern.sub('', meta['id']) if meta['id'] else "unknown"): continue
                 for release in data.get(alias, {}).get('releases', {}).get('edges', []):
-                    for asset in release.get('node', {}).get('releaseAssets', {}).get('nodes', []):
+                    nodes = release.get('node', {}).get('releaseAssets', {}).get('nodes', [])
+                    if not nodes: continue
+                    for asset in nodes:
                         if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
                     else: continue
                     break
