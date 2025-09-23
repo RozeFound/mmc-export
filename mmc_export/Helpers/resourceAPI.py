@@ -345,14 +345,26 @@ class ResourceAPI_Batched(ResourceAPI):
         async with self.session.post(f"{self.github}/graphql", json={"query": payload}, headers=headers) as response:
             if response.status == 401: delete_github_token(); raise tn.TryAgain
             if response.status != 200 and response.status != 504: return
-            data = (await response.json())['data']      
+            data = (await response.json()).get('data', dict())
+
+            if not data: return
 
             for meta, resource in self.queue:
-                if not data.get(alias := pattern.sub('', meta['id']) if meta['id'] else "unknown"): continue
-                for release in data.get(alias, {}).get('releases', {}).get('edges', []):
-                    nodes = release.get('node', {}).get('releaseAssets', {}).get('nodes', [])
-                    if not nodes: continue
+
+                alias = pattern.sub('', meta['id']) if meta['id'] else "unknown"
+
+                if not (repo := data.get(alias, dict())) continue
+                if not (releases := repo.get('releases', dict())): continue
+                if not (edges := releases.get('edges', list())): continue
+
+                for release in edges:
+
+                    if not (node := release.get('node', dict())): continue
+                    if not (assets := node.get('releaseAssets', dict())): continue
+                    if not (nodes := assets.get('nodes', list())): continue
+
                     for asset in nodes:
+                        if not asset.get('name') or not asset.get('downloadUrl'): continue
                         if asset['name'] == resource.file.name: url = asset['downloadUrl']; break
                     else: continue
                     break
