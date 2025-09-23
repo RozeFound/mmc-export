@@ -25,7 +25,7 @@ class ResourceAPI(object):
         self.session = session
         self.intermediate = intermediate
 
-        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.9"
+        self.session.headers["User-Agent"] = "RozeFound/mmc-export/2.8.10"
         self.session.headers["X-Api-Key"] = config.CURSEFORGE_API_TOKEN
         self.session.headers["Content-Type"] = "application/json"
         self.session.headers["Accept"] = "application/json"
@@ -353,7 +353,7 @@ class ResourceAPI_Batched(ResourceAPI):
 
                 alias = pattern.sub('', meta['id']) if meta['id'] else "unknown"
 
-                if not (repo := data.get(alias, dict())) continue
+                if not (repo := data.get(alias, dict())): continue
                 if not (releases := repo.get('releases', dict())): continue
                 if not (edges := releases.get('edges', list())): continue
 
